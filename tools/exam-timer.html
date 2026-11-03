@@ -63,6 +63,23 @@ input[type=file]{display:none}
 .mini.red{color:#ff3b30}
 .pillfail{color:#ff3b30;background:#fff1f1;border:1px solid #ffd7d7;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:700;flex:none}
 .pillok{color:#0071e3;background:#eef6ff;border:1px solid #d6e8ff;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:700;flex:none}
+body.dark{background:#000;color:#f5f5f7}
+body.dark .eyebrow,body.dark .sub,body.dark .mut,body.dark .timerbar .label,body.dark .timerbar .meta,body.dark .pagelabel{color:#98989d}
+body.dark .card,body.dark .pdfpage,body.dark .modalbox{background:#1c1c1e;box-shadow:none}
+body.dark .seg{background:#2c2c2e}
+body.dark .seg button{color:#98989d}
+body.dark .seg button.on{background:#f5f5f7;color:#000}
+body.dark .btn.sec{background:#2c2c2e;color:#f5f5f7}
+body.dark .drop{background:#2c2c2e;border-color:#38383a}
+body.dark .timerbar{background:rgba(28,28,30,.85);border-color:#38383a}
+body.dark .timerbar.warn{background:#3a1a1a}
+body.dark .bar{background:#38383a}
+body.dark .tools button,body.dark .mini{background:#1c1c1e;color:#f5f5f7;border-color:#38383a}
+body.dark .mini.red{color:#ff6961}
+body.dark .hist .rowline{border-color:#38383a}
+body.dark .pillok{background:#12283d;color:#64a8ff;border-color:#1e3a5c}
+body.dark .pillfail{background:#3a1a1a;color:#ff6961;border-color:#5a2a2a}
+body.dark .btn.danger:disabled{background:#2c2c2e;color:#98989d}
 .section{margin-top:28px}
 .section:first-child{margin-top:0}
 </style>
@@ -99,6 +116,15 @@ input[type=file]{display:none}
 </div>
 
 <div class="section">
+<h2>Appearance</h2>
+<div class="seg" id="themeSeg">
+<button class="on" data-theme="light"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Light</span></button>
+<button data-theme="dark"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>Dark</span></button>
+</div>
+<p class="mut" style="margin-top:10px">Forced mode — it stays on the one you pick, even during the exam.</p>
+</div>
+
+<div class="section">
 <h2>Start</h2>
 <button class="btn" id="startBtn" onclick="askStart()">Start</button>
 <p class="mut" style="margin-top:12px">No pause. No stop.<br>Closing the page does not stop it.</p>
@@ -116,7 +142,7 @@ input[type=file]{display:none}
 <div class="time" id="clock">1:30:00</div>
 <div class="bar"><i id="prog" style="width:0%"></i></div>
 <div class="meta"><span id="elapsedLabel">Elapsed 00:00</span><span id="endLabel"></span><span id="warnLabel"></span></div>
-<div class="row" style="max-width:520px;margin:16px auto 0"><button class="btn danger" id="resignBtn" onclick="askResign()" disabled>Resign</button></div>
+<div class="row" style="max-width:520px;margin:16px auto 0"><button class="btn danger" id="resignBtn" onclick="askResign()">Resign</button><button class="btn sec" id="themeToggleBtn" onclick="toggleTheme()" style="flex:none;width:auto;padding-left:18px;padding-right:18px">Dark mode</button></div>
 <p class="mut" id="resignNote" style="margin-top:10px">Resign is available at any time.</p>
 </div>
 </div>
@@ -148,6 +174,14 @@ input[type=file]{display:none}
 if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
 const KEY='examTimerGeneralV1';
 let startTime=null;
+function applyTheme(theme){
+let dark=theme==='dark'; document.body.classList.toggle('dark',dark);
+try{ localStorage.setItem('examTimerTheme',theme); }catch(e){}
+document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.theme===theme));
+let tb=$('themeToggleBtn'); if(tb) tb.textContent=dark?'Light mode':'Dark mode';
+}
+function toggleTheme(){ applyTheme(document.body.classList.contains('dark')?'light':'dark'); }
+document.querySelectorAll('#themeSeg button').forEach(b=>b.onclick=()=>applyTheme(b.dataset.theme));
 function openDB(){
 return new Promise((resolve,reject)=>{
 let req=indexedDB.open('examTimerDB',2);
@@ -272,6 +306,7 @@ let saved=JSON.parse(localStorage.getItem(KEY)||'null'); if(!saved) { $('clock')
 if(saved.endTime>Date.now()){ durationMin=saved.durationMin; totalMs=durationMin*60*1000; endTime=saved.endTime; startTime=endTime-totalMs; document.querySelectorAll('#durSeg button').forEach(b=>{ b.classList.toggle('on', parseInt(b.dataset.min,10)===durationMin); }); showRunning(); tick(); interval=setInterval(tick,500); }
 else { localStorage.removeItem(KEY); }
 }catch(e){}
+try{ applyTheme(localStorage.getItem('examTimerTheme')||'light'); }catch(e){ applyTheme('light'); }
 renderHistory();
 })();
 </script>
