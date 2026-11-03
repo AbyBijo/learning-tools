@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7">
+<title>Learning Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#f5f5f7;color:#1d1d1f;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 20px 64px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:17px;letter-spacing:-.01em}
+.mark{width:36px;height:36px;border-radius:11px;background:#1d1d1f;color:#fff;display:grid;place-items:center;flex:none}
+.mark svg{width:20px;height:20px}
+.gh{display:inline-flex;align-items:center;gap:8px;background:#1d1d1f;color:#fff;border-radius:999px;padding:10px 16px;font-size:14px;font-weight:600}
+.gh svg{width:16px;height:16px}
+.hero{padding:56px 0 28px;text-align:left}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#86868b;font-weight:600}
+h1{font-size:clamp(40px,7vw,64px);line-height:1.02;letter-spacing:-.035em;margin:14px 0 12px;font-weight:800}
+.sub{color:#6e6e73;font-size:19px;line-height:1.5;max-width:620px;margin:0}
+.section{margin-top:40px}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:16px}
+.section-head h2{font-size:22px;letter-spacing:-.02em;margin:0;font-weight:700}
+.section-head span{color:#86868b;font-size:13px}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:640px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:#fff;border:1px solid #e8e8ed;border-radius:24px;padding:24px;display:flex;gap:16px;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .2s ease,box-shadow .2s ease}
+.card:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.08)}
+.card.featured{grid-column:1/-1}
+.icon{width:52px;height:52px;border-radius:16px;background:#f5f5f7;border:1px solid #e8e8ed;display:grid;place-items:center;flex:none;color:#0071e3}
+.icon svg{width:26px;height:26px}
+.card h3{font-size:19px;letter-spacing:-.01em;margin:0 0 6px;font-weight:700}
+.card p{color:#6e6e73;font-size:15px;line-height:1.55;margin:0}
+.meta{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
+.pill{font-size:12px;font-weight:600;color:#424245;background:#f5f5f7;border:1px solid #e8e8ed;border-radius:999px;padding:5px 10px}
+.open{margin-left:auto;align-self:center;flex:none;color:#0071e3;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.open svg{width:16px;height:16px}
+.note{background:#fff;border:1px solid #e8e8ed;border-radius:24px;padding:24px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.note h3{margin:0 0 8px;font-size:17px}
+.note p{color:#6e6e73;line-height:1.6;margin:0 0 10px;font-size:15px}
+.note code{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#f5f5f7;border:1px solid #e8e8ed;border-radius:8px;padding:2px 7px}
+.muted{color:#86868b;font-size:13px;line-height:1.5}
+footer{margin-top:48px;padding-top:24px;border-top:1px solid #d2d2d7;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;color:#86868b;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      </span>
+      Learning Tools
+    </div>
+    <a class="gh" href="https://github.com/AbyBijo/learning-tools">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.15c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.11-.74.4-1.25.72-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 1.67.41.35.77 1.05.77 2.12v3.15c0 .3.21.67.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+      GitHub
+    </a>
+  </div>
+
+  <header class="hero">
+    <div class="eyebrow">Exam preparation</div>
+    <h1>Tools that help<br>you prepare, simply.</h1>
+    <p class="sub">A small collection of single-page tools for exam preparation. Open one, use it, close it. Nothing to install.</p>
+  </header>
+
+  <section class="section">
+    <div class="section-head"><h2>All tools</h2><span id="tool-count">1 tool</span></div>
+    <div class="grid" id="tool-grid">
+      <a class="card featured" href="tools/exam-timer.html">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>
+        </span>
+        <span style="flex:1;min-width:0">
+          <h3>Exam Timer</h3>
+          <p>General exam timer with a PDF paper beside the clock. Choose a duration, load any paper, start — then no pause, no stop.</p>
+          <span class="meta"><span class="pill">1h 30m</span><span class="pill">1h 45m</span><span class="pill">2h</span><span class="pill">Load any PDF</span></span>
+        </span>
+        <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+      </a>
+    </div>
+    <p class="muted" id="auto-note" style="margin-top:14px">New tools added to the <code>tools/</code> folder appear in this list automatically.</p>
+  </section>
+
+  <section class="section">
+    <div class="note">
+      <h3>Adding a new tool</h3>
+      <p>Add a single <code>.html</code> file to the <code>tools/</code> folder in this repository. This page reads that folder from GitHub and lists every tool file it finds — you do not need to edit this index page for a new tool to show up here.</p>
+      <p class="muted">If the GitHub listing cannot be reached, the tools already listed above still work.</p>
+    </div>
+  </section>
+
+  <footer>
+    <span>Learning Tools — various tools for exam preparation.</span>
+    <a href="https://github.com/AbyBijo/learning-tools">github.com/AbyBijo/learning-tools</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var grid = document.getElementById('tool-grid');
+  var count = document.getElementById('tool-count');
+  var seen = { 'exam-timer.html': true };
+
+  function titleFromFile(name) {
+    var base = name.replace(/\.html$/i, '').replace(/[-_]+/g, ' ').trim();
+    return base.replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+
+  function iconFor(name) {
+    if (name.indexOf('timer') !== -1 || name.indexOf('clock') !== -1) {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>';
+    }
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>';
+  }
+
+  fetch('https://api.github.com/repos/AbyBijo/learning-tools/contents/tools')
+    .then(function (r) { if (!r.ok) throw new Error('listing unavailable'); return r.json(); })
+    .then(function (items) {
+      var added = 0;
+      items.filter(function (it) { return it.type === 'file' && /\.html$/i.test(it.name) && !seen[it.name]; })
+        .sort(function (a, b) { return a.name.localeCompare(b.name); })
+        .forEach(function (it) {
+          var a = document.createElement('a');
+          a.className = 'card';
+          a.href = 'tools/' + encodeURIComponent(it.name);
+          a.innerHTML = '<span class="icon" aria-hidden="true">' + iconFor(it.name.toLowerCase()) + '</span>' +
+            '<span style="flex:1;min-width:0"><h3>' + titleFromFile(it.name) + '</h3>' +
+            '<p>Open this tool.</p></span>' +
+            '<span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>';
+          grid.appendChild(a);
+          added++;
+        });
+      if (added) count.textContent = (1 + added) + ' tools';
+    })
+    .catch(function () { /* static list above remains usable */ });
+})();
+</script>
+</body>
+</html>
