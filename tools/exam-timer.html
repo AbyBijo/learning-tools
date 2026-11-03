@@ -302,8 +302,8 @@ await page.render({canvasContext:canvas.getContext('2d'), viewport:vp}).promise;
 window.addEventListener('beforeunload', e=>{ if(endTime && Date.now()<endTime && !finished){ e.preventDefault(); e.returnValue=''; } });
 (function(){
 try{
-let saved=JSON.parse(localStorage.getItem(KEY)||'null'); if(!saved) { $('clock').textContent=fmtClock(durationMin*60); return; }
-if(saved.endTime>Date.now()){ durationMin=saved.durationMin; totalMs=durationMin*60*1000; endTime=saved.endTime; startTime=endTime-totalMs; document.querySelectorAll('#durSeg button').forEach(b=>{ b.classList.toggle('on', parseInt(b.dataset.min,10)===durationMin); }); showRunning(); tick(); interval=setInterval(tick,500); }
+let saved=JSON.parse(localStorage.getItem(KEY)||'null'); if(!saved) { $('clock').textContent=fmtClock(durationMin*60); }
+else if(saved.endTime>Date.now()){ durationMin=saved.durationMin; totalMs=durationMin*60*1000; endTime=saved.endTime; startTime=endTime-totalMs; document.querySelectorAll('#durSeg button').forEach(b=>{ b.classList.toggle('on', parseInt(b.dataset.min,10)===durationMin); }); showRunning(); tick(); interval=setInterval(tick,500); }
 else { localStorage.removeItem(KEY); }
 }catch(e){}
 try{ applyTheme(localStorage.getItem('examTimerTheme')||'light'); }catch(e){ applyTheme('light'); }
