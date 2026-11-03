@@ -51,6 +51,18 @@ input[type=file]{display:none}
 #timeup{position:fixed;inset:0;background:rgba(0,0,0,.85);color:#fff;display:none;align-items:center;justify-content:center;z-index:60;padding:24px;text-align:center}
 #timeup.open{display:flex}
 #timeup h2{font-size:44px;letter-spacing:-.03em;margin:0}
+.btn.danger{background:#ff3b30;color:#fff}
+.btn.danger:disabled{background:#f5f5f7;color:#86868b}
+.saved,.hist{text-align:left;max-width:520px;margin:0 auto}
+.saved .rowline,.hist .rowline{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #e8e8ed}
+.saved .rowline:last-child,.hist .rowline:last-child{border-bottom:0}
+.saved .nm,.hist .nm{flex:1;min-width:0}
+.saved .nm b,.hist .nm b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.saved .nm span,.hist .nm span{color:#86868b;font-size:12px}
+.mini{border:1px solid #e2e2e7;background:#fff;color:#1d1d1f;border-radius:9px;padding:8px 12px;font-weight:600;font-size:13px;cursor:pointer;flex:none}
+.mini.red{color:#ff3b30}
+.pillfail{color:#ff3b30;background:#fff1f1;border:1px solid #ffd7d7;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:700;flex:none}
+.pillok{color:#0071e3;background:#eef6ff;border:1px solid #d6e8ff;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:700;flex:none}
 .section{margin-top:28px}
 .section:first-child{margin-top:0}
 </style>
@@ -91,6 +103,17 @@ input[type=file]{display:none}
 <button class="btn" id="startBtn" onclick="askStart()">Start</button>
 <p class="mut" style="margin-top:12px">No pause. No stop.<br>Closing the page does not stop it.</p>
 </div>
+
+<div class="section">
+<h2>Saved papers</h2>
+<div class="saved" id="savedPapers"><p class="mut" style="margin:0">No saved papers yet.</p></div>
+<p class="mut">Papers you load are saved on this device, so you can reload one here without choosing the file again.</p>
+</div>
+
+<div class="section">
+<h2>Exam history</h2>
+<div class="hist" id="historyList"><p class="mut" style="margin:0">No exams yet.</p></div>
+</div>
 </div>
 
 <div id="timerCard" style="display:none">
@@ -99,6 +122,8 @@ input[type=file]{display:none}
 <div class="time" id="clock">1:30:00</div>
 <div class="bar"><i id="prog" style="width:0%"></i></div>
 <div class="meta"><span id="elapsedLabel">Elapsed 00:00</span><span id="endLabel"></span><span id="warnLabel"></span></div>
+<div class="row" style="max-width:520px;margin:16px auto 0"><button class="btn danger" id="resignBtn" onclick="askResign()" disabled>Resign</button></div>
+<p class="mut" id="resignNote" style="margin-top:10px">Resign opens 5 minutes before half-time.</p>
 </div>
 </div>
 
@@ -109,7 +134,7 @@ input[type=file]{display:none}
 </div>
 
 <div id="modal"><div class="modalbox">
-<h2>Start?</h2>
+<h2 id="modalTitle">Start?</h2>
 <p class="mut" id="modalText"></p>
 <div class="row"><button class="btn sec" onclick="closeModal()">Back</button><button class="btn" id="modalConfirm">Start</button></div>
 </div></div>
@@ -119,19 +144,107 @@ input[type=file]{display:none}
 <button class="btn" style="max-width:320px;margin:20px auto 0" onclick="newExam()">New exam</button>
 </div></div>
 
+<div id="resultOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.85);color:#fff;display:none;align-items:center;justify-content:center;z-index:60;padding:24px;text-align:center"><div>
+<h2 id="resultTitle" style="font-size:44px;letter-spacing:-.03em;margin:0">Failed.</h2>
+<p id="resultText" style="color:#d2d2d7;font-size:15px;line-height:1.5"></p>
+<button class="btn" style="max-width:320px;margin:20px auto 0" onclick="newExam()">New exam</button>
+</div></div>
+
 <script>
 if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
 const KEY='examTimerGeneralV1';
+let startTime=null;
+function openDB(){
+return new Promise((resolve,reject)=>{
+let req=indexedDB.open('examTimerDB',1);
+req.onupgradeneeded=()=>{ let db=req.result; if(!db.objectStoreNames.contains('papers')) db.createObjectStore('papers',{keyPath:'name'}); if(!db.objectStoreNames.contains('history')) db.createObjectStore('history',{keyPath:'id',autoIncrement:true}); };
+req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
+});
+}
+function dbTx(store,mode,fn){
+return openDB().then(db=>new Promise((resolve,reject)=>{
+let tx=db.transaction(store,mode); let req=fn(tx.objectStore(store));
+req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
+tx.oncomplete=()=>db.close(); tx.onerror=()=>db.close();
+}));
+}
+function savePaper(name,buf){ if(!window.indexedDB) return Promise.resolve(); return dbTx('papers','readwrite',s=>s.put({name:name,size:buf.byteLength,addedAt:Date.now(),data:buf})).catch(()=>{}); }
+function deletePaper(name){ return dbTx('papers','readwrite',s=>s.delete(name)).catch(()=>{}); }
+function loadSavedPaper(name){
+return dbTx('papers','readonly',s=>s.get(name)).then(async rec=>{
+if(!rec || !window.pdfjsLib) return;
+pdfDoc=await pdfjsLib.getDocument({data:rec.data}).promise;
+$('pdfName').textContent=rec.name; $('pdfTools').style.display='flex'; $('pdfEmpty').style.display='none'; $('pdfStatus').textContent=pdfDoc.numPages+' pages (saved paper)';
+renderAll();
+});
+}
+function addHistory(entry){ if(!window.indexedDB) return Promise.resolve(); return dbTx('history','readwrite',s=>s.add(entry)).then(()=>renderHistory()).catch(()=>{}); }
+function escEl(tag,text){ let el=document.createElement(tag); el.textContent=text; return el; }
+function fmtSize(n){ return n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB'; }
+function fmtDate(ts){ return new Date(ts).toLocaleString([], {day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }
+async function renderSavedPapers(){
+let el=$('savedPapers'); if(!window.indexedDB){ el.innerHTML=''; el.appendChild(escEl('p','Saved papers need this browser.')); return; }
+let items=await dbTx('papers','readonly',s=>s.getAll()).catch(()=>[]);
+el.innerHTML='';
+if(!items.length){ el.appendChild(escEl('p','No saved papers yet.')); el.firstChild.className='mut'; return; }
+items.sort((a,b)=>b.addedAt-a.addedAt).forEach(rec=>{
+let row=document.createElement('div'); row.className='rowline';
+let nm=document.createElement('div'); nm.className='nm'; nm.appendChild(escEl('b',rec.name)); nm.appendChild(escEl('span',fmtSize(rec.size)+'  ·  '+fmtDate(rec.addedAt))); row.appendChild(nm);
+let load=document.createElement('button'); load.className='mini'; load.textContent='Load'; load.onclick=()=>loadSavedPaper(rec.name); row.appendChild(load);
+let del=document.createElement('button'); del.className='mini red'; del.textContent='Delete'; del.onclick=async()=>{ await deletePaper(rec.name); renderSavedPapers(); }; row.appendChild(del);
+el.appendChild(row);
+});
+}
+async function renderHistory(){
+let el=$('historyList'); if(!window.indexedDB){ el.innerHTML=''; el.appendChild(escEl('p','History needs this browser.')); return; }
+let items=await dbTx('history','readonly',s=>s.getAll()).catch(()=>[]);
+el.innerHTML='';
+if(!items.length){ el.appendChild(escEl('p','No exams yet.')); el.firstChild.className='mut'; return; }
+items.sort((a,b)=>b.endedAt-a.endedAt).slice(0,20).forEach(rec=>{
+let row=document.createElement('div'); row.className='rowline';
+let nm=document.createElement('div'); nm.className='nm'; nm.appendChild(escEl('b',rec.outcome));
+let detail=(rec.durationMin+' min  ·  Elapsed '+fmt(Math.floor((rec.elapsedMs||0)/1000))+'  ·  '+fmtDate(rec.endedAt));
+nm.appendChild(escEl('span',detail)); row.appendChild(nm);
+let pill=document.createElement('span'); pill.className=rec.outcome==='FAILED'?'pillfail':'pillok'; pill.textContent=rec.outcome; row.appendChild(pill);
+el.appendChild(row);
+});
+}
+function halfMs(){ return totalMs/2; }
+function resignState(){
+let btn=$('resignBtn'); if(!btn || !endTime) return;
+let elapsed=Date.now()-startTime; let win=halfMs()-5*60*1000;
+if(elapsed<win){ btn.disabled=true; $('resignNote').textContent='Resign opens 5 minutes before half-time.'; }
+else if(elapsed<halfMs()){ btn.disabled=false; $('resignNote').textContent='Resigning now will instantly mark you FAILED.'; }
+else { btn.disabled=false; $('resignNote').textContent='Resigning now will mark this exam COMPLETE.'; }
+}
+function askResign(){
+if(!endTime || $('resignBtn').disabled) return;
+let elapsed=Date.now()-startTime; let outcome=elapsed<halfMs()?'FAILED':'COMPLETED';
+$('modalTitle').textContent='Resign?';
+$('modalText').textContent=outcome==='FAILED'?'Resign now? You will be instantly marked FAILED. This cannot be undone.':'Resign now? This exam will be marked COMPLETE. This cannot be undone.';
+$('modalConfirm').textContent='Resign'; $('modal').classList.add('open');
+$('modalConfirm').onclick=()=>{ closeModal(); doResign(outcome); };
+}
+function doResign(outcome){
+clearInterval(interval); finished=true; let elapsed=Date.now()-startTime;
+addHistory({outcome:outcome,durationMin:durationMin,elapsedMs:elapsed,endedAt:Date.now(),resigned:true});
+localStorage.removeItem(KEY); endTime=null;
+$('resultTitle').textContent=outcome==='FAILED'?'Failed.':'Completed.';
+$('resultTitle').style.color=outcome==='FAILED'?'#ff6961':'#fff';
+$('resultText').textContent=outcome==='FAILED'?('Resigned at '+fmt(Math.floor(elapsed/1000))+' elapsed, before half-time.'):'Resigned at '+fmt(Math.floor(elapsed/1000))+' elapsed, after half-time.';
+$('resultOverlay').style.display='flex';
+}
+
 let durationMin=90, pdfDoc=null, zoom=1.0;
 let endTime=null, totalMs=0, interval=null, finished=false;
 function $(id){return document.getElementById(id);}
 function fmt(s){let h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60; return h+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0');}
 function fmtClock(s){let h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60; return h>0?String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'):String(m).padStart(2,'0')+':'+String(x).padStart(2,'0');}
 document.querySelectorAll('#durSeg button').forEach(b=>b.onclick=()=>{ if(endTime) return; document.querySelectorAll('#durSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); durationMin=parseInt(b.dataset.min,10); $('durNote').textContent=b.textContent; });
-function askStart(){ $('modalText').textContent=document.querySelector('#durSeg button.on').textContent+'. No pause. No stop.'; $('modal').classList.add('open'); $('modalConfirm').onclick=()=>{ closeModal(); startTimer(); }; }
+function askStart(){ $('modalTitle').textContent='Start?'; $('modalConfirm').textContent='Start'; $('modalText').textContent=document.querySelector('#durSeg button.on').textContent+'. No pause. No stop.'; $('modal').classList.add('open'); $('modalConfirm').onclick=()=>{ closeModal(); startTimer(); }; }
 function closeModal(){ $('modal').classList.remove('open'); }
 function startTimer(){
-totalMs=durationMin*60*1000; endTime=Date.now()+totalMs;
+totalMs=durationMin*60*1000; endTime=Date.now()+totalMs; startTime=Date.now();
 localStorage.setItem(KEY, JSON.stringify({endTime:endTime, durationMin:durationMin}));
 showRunning(); tick();
 if(interval) clearInterval(interval); interval=setInterval(tick, 500);
@@ -139,7 +252,7 @@ try{ if(navigator.wakeLock) navigator.wakeLock.request('screen'); }catch(e){}
 }
 function showRunning(){
 $('setupCard').style.display='none'; $('timerCard').style.display='block'; $('pdfEmpty').style.display=pdfDoc?'none':'block';
-document.querySelectorAll('#durSeg button').forEach(b=>b.disabled=true);
+document.querySelectorAll('#durSeg button').forEach(b=>b.disabled=true); $('resignBtn').disabled=true; $('resignNote').textContent='Resign opens 5 minutes before half-time.';
 }
 function tick(){
 let remain=Math.max(0, endTime-Date.now()); let elapsed=totalMs-remain;
@@ -148,17 +261,18 @@ $('elapsedLabel').textContent='Elapsed '+fmt(Math.floor(elapsed/1000));
 $('prog').style.width=(elapsed/totalMs*100)+'%';
 let end=new Date(endTime); $('endLabel').textContent='Ends '+end.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
 let warn=$('warnLabel'); if(remain<=10*60*1000 && remain>0){ warn.textContent='Last 10 min'; $('timerBar').classList.add('warn'); } else if(remain<=20*60*1000 && remain>0){ warn.textContent='20 min left'; } else { warn.textContent=''; }
+resignState();
 if(remain<=0){ finishTimer(); }
 }
 function finishTimer(){
-if(finished) return; finished=true; clearInterval(interval);
+if(finished) return; finished=true; clearInterval(interval); addHistory({outcome:'TIME UP',durationMin:durationMin,elapsedMs:totalMs,endedAt:Date.now(),resigned:false});
 $('clock').textContent='0:00:00'; $('timerLabel').textContent='Finished';
 try{ let ctx=new (window.AudioContext||window.webkitAudioContext)(); [523,659,784].forEach((f,i)=>{let o=ctx.createOscillator(),g=ctx.createGain(); o.frequency.value=f; o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(.12,ctx.currentTime+i*.25); g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+i*.25+.5); o.start(ctx.currentTime+i*.25); o.stop(ctx.currentTime+i*.25+.55);}); }catch(e){}
 if(navigator.vibrate) navigator.vibrate([300,150,300,150,300]);
 $('timeup').classList.add('open');
 }
 function newExam(){
-localStorage.removeItem(KEY); endTime=null; finished=false; $('timeup').classList.remove('open'); $('timerCard').style.display='none'; $('setupCard').style.display='block'; document.querySelectorAll('#durSeg button').forEach(b=>b.disabled=false);
+localStorage.removeItem(KEY); endTime=null; finished=false; $('timeup').classList.remove('open'); $('resultOverlay').style.display='none'; renderHistory(); $('timerCard').style.display='none'; $('setupCard').style.display='block'; document.querySelectorAll('#durSeg button').forEach(b=>b.disabled=false);
 $('clock').textContent=fmtClock(durationMin*60); $('timerLabel').textContent='Time remaining'; $('timerBar').classList.remove('warn'); $('prog').style.width='0%';
 }
 function zoomIn(){ zoom=Math.min(2.2, zoom+0.2); renderAll(); }
@@ -168,7 +282,7 @@ $('pdfFile').addEventListener('change', async (e)=>{
 let file=e.target.files[0]; if(!file) return; $('pdfName').textContent=file.name;
 if(!window.pdfjsLib){ $('pdfStatus').textContent='PDF viewer needs internet on first load.'; return; }
 try{
-let buf=await file.arrayBuffer(); pdfDoc=await pdfjsLib.getDocument({data:buf}).promise;
+let buf=await file.arrayBuffer(); pdfDoc=await pdfjsLib.getDocument({data:buf}).promise; savePaper(file.name,buf).then(()=>renderSavedPapers());
 $('pdfTools').style.display='flex'; $('pdfEmpty').style.display='none'; $('pdfStatus').textContent=pdfDoc.numPages+' pages';
 renderAll();
 }catch(err){ $('pdfStatus').textContent='Could not open that PDF.'; }
@@ -186,9 +300,10 @@ window.addEventListener('beforeunload', e=>{ if(endTime && Date.now()<endTime &&
 (function(){
 try{
 let saved=JSON.parse(localStorage.getItem(KEY)||'null'); if(!saved) { $('clock').textContent=fmtClock(durationMin*60); return; }
-if(saved.endTime>Date.now()){ durationMin=saved.durationMin; totalMs=durationMin*60*1000; endTime=saved.endTime; document.querySelectorAll('#durSeg button').forEach(b=>{ b.classList.toggle('on', parseInt(b.dataset.min,10)===durationMin); }); showRunning(); tick(); interval=setInterval(tick,500); }
+if(saved.endTime>Date.now()){ durationMin=saved.durationMin; totalMs=durationMin*60*1000; endTime=saved.endTime; startTime=endTime-totalMs; document.querySelectorAll('#durSeg button').forEach(b=>{ b.classList.toggle('on', parseInt(b.dataset.min,10)===durationMin); }); showRunning(); tick(); interval=setInterval(tick,500); }
 else { localStorage.removeItem(KEY); }
 }catch(e){}
+renderSavedPapers(); renderHistory();
 })();
 </script>
 </body>
