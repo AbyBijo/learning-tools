@@ -123,7 +123,7 @@ input[type=file]{display:none}
 <div class="bar"><i id="prog" style="width:0%"></i></div>
 <div class="meta"><span id="elapsedLabel">Elapsed 00:00</span><span id="endLabel"></span><span id="warnLabel"></span></div>
 <div class="row" style="max-width:520px;margin:16px auto 0"><button class="btn danger" id="resignBtn" onclick="askResign()" disabled>Resign</button></div>
-<p class="mut" id="resignNote" style="margin-top:10px">Resign opens 5 minutes before half-time.</p>
+<p class="mut" id="resignNote" style="margin-top:10px">Resign is available at any time.</p>
 </div>
 </div>
 
@@ -213,13 +213,12 @@ function halfMs(){ return totalMs/2; }
 function resignState(){
 let btn=$('resignBtn'); if(!btn || !endTime) return;
 let elapsed=Date.now()-startTime; let win=halfMs()-5*60*1000;
-if(elapsed<win){ btn.disabled=true; $('resignNote').textContent='Resign opens 5 minutes before half-time.'; }
-else if(elapsed<halfMs()){ btn.disabled=false; $('resignNote').textContent='Resigning now will instantly mark you FAILED.'; }
-else { btn.disabled=false; $('resignNote').textContent='Resigning now will mark this exam COMPLETE.'; }
+btn.disabled=false;
+$('resignNote').textContent=elapsed<win?'Resigning now will instantly mark you FAILED.':'Resigning now will mark this exam COMPLETE.';
 }
 function askResign(){
-if(!endTime || $('resignBtn').disabled) return;
-let elapsed=Date.now()-startTime; let outcome=elapsed<halfMs()?'FAILED':'COMPLETED';
+if(!endTime) return;
+let elapsed=Date.now()-startTime; let outcome=elapsed<halfMs()-5*60*1000?'FAILED':'COMPLETED';
 $('modalTitle').textContent='Resign?';
 $('modalText').textContent=outcome==='FAILED'?'Resign now? You will be instantly marked FAILED. This cannot be undone.':'Resign now? This exam will be marked COMPLETE. This cannot be undone.';
 $('modalConfirm').textContent='Resign'; $('modal').classList.add('open');
@@ -231,7 +230,7 @@ addHistory({outcome:outcome,durationMin:durationMin,elapsedMs:elapsed,endedAt:Da
 localStorage.removeItem(KEY); endTime=null;
 $('resultTitle').textContent=outcome==='FAILED'?'Failed.':'Completed.';
 $('resultTitle').style.color=outcome==='FAILED'?'#ff6961':'#fff';
-$('resultText').textContent=outcome==='FAILED'?('Resigned at '+fmt(Math.floor(elapsed/1000))+' elapsed, before half-time.'):'Resigned at '+fmt(Math.floor(elapsed/1000))+' elapsed, after half-time.';
+$('resultText').textContent=outcome==='FAILED'?('Resigned at '+fmt(Math.floor(elapsed/1000))+' elapsed, before 5 minutes before half-time.'):'Resigned at '+fmt(Math.floor(elapsed/1000))+' elapsed, at or after 5 minutes before half-time.';
 $('resultOverlay').style.display='flex';
 }
 
@@ -252,7 +251,7 @@ try{ if(navigator.wakeLock) navigator.wakeLock.request('screen'); }catch(e){}
 }
 function showRunning(){
 $('setupCard').style.display='none'; $('timerCard').style.display='block'; $('pdfEmpty').style.display=pdfDoc?'none':'block';
-document.querySelectorAll('#durSeg button').forEach(b=>b.disabled=true); $('resignBtn').disabled=true; $('resignNote').textContent='Resign opens 5 minutes before half-time.';
+document.querySelectorAll('#durSeg button').forEach(b=>b.disabled=true); $('resignBtn').disabled=false; $('resignNote').textContent='Resigning now will instantly mark you FAILED.';
 }
 function tick(){
 let remain=Math.max(0, endTime-Date.now()); let elapsed=totalMs-remain;
