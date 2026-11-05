@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f5f7">
+<meta name="color-scheme" content="light">
 <title>Compartmentalizer</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -14,6 +15,7 @@
 input:focus,textarea:focus,button:focus{outline:none!important;box-shadow:none!important;border-color:#a1a1a6!important}
 ::selection{background:#e5e5ea;color:#1d1d1f}
 *{box-sizing:border-box}
+html{color-scheme:light}
 body{margin:0;background:#f5f5f7;color:#1d1d1f;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;text-align:center;-webkit-font-smoothing:antialiased}
 .wrap{max-width:760px;margin:0 auto;padding:32px 20px 110px}
 .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#86868b;font-weight:600}
@@ -52,10 +54,19 @@ input[type=text],input[type=number]{width:100%;background:#f5f5f7;border:1px sol
 .stat b{display:block;font-size:18px}
 .stat span{font-size:11px;color:#86868b;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
 /* Chapter rows */
-.chapter-row{background:#fff;border-radius:20px;padding:18px 20px;margin-top:12px;box-shadow:0 1px 2px rgba(0,0,0,.05);display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;text-align:left}
-.chapter-row h4{margin:0;font-size:16px}
-.chapter-row .count{font-size:12px;color:#86868b;margin-top:4px;font-weight:600}
-.chapter-dds{display:flex;gap:8px;flex-shrink:0}
+.chapter-row{background:#fff;border-radius:20px;padding:18px 20px;margin-top:12px;box-shadow:0 1px 2px rgba(0,0,0,.05);cursor:pointer;text-align:left}
+.chapter-row h4{margin:0;font-size:18px;line-height:1.35}
+.chapter-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.chapter-meta .count{font-size:12px;color:#86868b;font-weight:600}
+.pill{font-size:12px;font-weight:600;color:#1d1d1f;background:#f5f5f7;border:1px solid #e2e2e7;border-radius:999px;padding:5px 10px}
+.pill.diff-easy{color:#137333}
+.pill.diff-hard{color:#c81e1e}
+.pill.imp-very{color:#7c2d12;font-weight:700}
+textarea{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;border-radius:12px;padding:13px 14px;font-size:15px;font-family:Inter,sans-serif;min-height:96px;resize:vertical}
+.view-note{background:#f5f5f7;border:1px solid #e2e2e7;border-radius:12px;padding:13px 14px;font-size:15px;line-height:1.6;text-align:left;white-space:pre-wrap;margin-top:6px}
+.topic-main{flex:1;min-width:0;text-align:left}
+.topic-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.note-preview{font-size:12px;color:#86868b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .section-label{font-size:12px;font-weight:600;color:#86868b;letter-spacing:.06em;text-transform:uppercase;text-align:left;margin:26px 0 0}
 /* Topics */
 .topic{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #e2e2e7;border-radius:14px;padding:9px 10px;margin-top:8px;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}
@@ -64,7 +75,7 @@ input[type=text],input[type=number]{width:100%;background:#f5f5f7;border:1px sol
 .topic.drop-after{border-bottom:2px solid #1d1d1f}
 .handle{touch-action:none;cursor:grab;color:#a1a1a6;font-size:18px;padding:6px 4px;flex-shrink:0;user-select:none;-webkit-user-select:none}
 .handle:active{cursor:grabbing}
-.topic .name{flex:1;font-size:14px;font-weight:600;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topic .name{font-size:15px;font-weight:600;text-align:left;line-height:1.4}
 .del{border:0;background:transparent;color:#c81e1e;font-size:18px;cursor:pointer;padding:6px;flex-shrink:0}
 /* FAB — one + button, bottom-right, action follows the page */
 .fab{position:fixed;right:20px;bottom:24px;width:56px;height:56px;border-radius:50%;border:0;background:#1d1d1f;color:#fff;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.22);z-index:40}
@@ -139,6 +150,9 @@ function $(id){return document.getElementById(id);}
 function uid(){return 'id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fmtDur(min){ if(min<60) return min+'m'; let h=Math.floor(min/60), m=min%60; return m? h+'h '+m+'m' : h+'h'; }
+function diffLabel(v){ let o=DIFF_OPTS.find(x=>x.v===v); return o?o.l:v; }
+function impLabel(v){ let o=IMP_OPTS.find(x=>x.v===v); return o?o.l:v; }
+function notePreview(note){ let first=String(note||'').split('\n')[0].trim(); return first.length>60 ? first.slice(0,60)+'…' : first; }
 function findSubject(id){ return state.subjects.find(s=>s.id===id); }
 function findChapter(sub, id){ return sub ? sub.chapters.find(c=>c.id===id) : null; }
 function openDB(){ return new Promise(res=>{ try{ let req=indexedDB.open(DB_NAME,1); req.onupgradeneeded=e=>{ e.target.result.createObjectStore(STORE,{keyPath:'id'}); }; req.onsuccess=e=>{ db=e.target.result; idbReady=true; res(true); }; req.onerror=()=>{ idbReady=false; res(false); }; }catch(e){ idbReady=false; res(false); } }); }
@@ -155,7 +169,7 @@ sub.chapters=sub.chapters||[];
 sub.chapters.forEach(ch=>{
 if(!ch.difficulty){ ch.difficulty='medium'; migrated=true; }
 if(!ch.importance){ ch.importance='important'; migrated=true; }
-ch.topics=(ch.topics||[]).map(t=>({difficulty:'medium', importance:'important', ...t}));
+ch.topics=(ch.topics||[]).map(t=>({difficulty:'medium', importance:'important', note:'', ...t, note:(t.note||'')}));
 });
 });
 if(migrated && idbReady){ for(let sub of state.subjects) await idbPut(sub); }
@@ -275,32 +289,26 @@ if(!sub.chapters.length){
 html+='<div class="card" style="text-align:center"><p class="empty" style="margin:0">No chapters yet.<br>Tap + below to add your first chapter.</p></div>';
 } else {
 sub.chapters.forEach(ch=>{
-html+='<div class="chapter-row" onclick="openChapter(event,\''+sub.id+'\',\''+ch.id+'\')"><div><h4>'+esc(ch.name)+'</h4><div class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'</div></div>'
-+'<div class="chapter-dds">'
-+ddHTML('chapter-diff', ch.difficulty, DIFF_OPTS, 'data-subject="'+sub.id+'" data-chapter="'+ch.id+'"', 'dd-btn pill diff-'+ch.difficulty)
-+ddHTML('chapter-imp', ch.importance, IMP_OPTS, 'data-subject="'+sub.id+'" data-chapter="'+ch.id+'"', 'dd-btn pill imp-'+ch.importance)
-+'</div></div>';
+html+='<div class="chapter-row" onclick="openChapter(event,\''+sub.id+'\',\''+ch.id+'\')"><h4>'+esc(ch.name)+'</h4>'
++'<div class="chapter-meta"><span class="pill diff-'+ch.difficulty+'">'+diffLabel(ch.difficulty)+'</span><span class="pill imp-'+ch.importance+'">'+impLabel(ch.importance)+'</span><span class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'</span></div></div>';
 });
 }
 $('viewSubject').innerHTML=html;
 }
 function topicRowHTML(sub, ch, t){
-return '<div class="topic" data-topic="'+t.id+'" data-chapter="'+ch.id+'" data-subject="'+sub.id+'">'
+let preview=notePreview(t.note);
+return '<div class="topic" data-topic="'+t.id+'" data-chapter="'+ch.id+'" data-subject="'+sub.id+'" onclick="openTopicPopup(event,\''+sub.id+'\',\''+ch.id+'\',\''+t.id+'\')">'
 +'<span class="handle" data-drag="'+t.id+'" title="Drag to reorder">⠿</span>'
-+'<span class="name">'+esc(t.name)+'</span>'
-+ddHTML('topic-diff', t.difficulty, DIFF_OPTS, 'data-subject="'+sub.id+'" data-chapter="'+ch.id+'" data-topic="'+t.id+'"', 'dd-btn pill diff-'+t.difficulty)
-+ddHTML('topic-imp', t.importance, IMP_OPTS, 'data-subject="'+sub.id+'" data-chapter="'+ch.id+'" data-topic="'+t.id+'"', 'dd-btn pill imp-'+t.importance)
-+'<button class="del" onclick="deleteTopic(\''+sub.id+'\',\''+ch.id+'\',\''+t.id+'\')" aria-label="Delete topic">×</button></div>';
++'<div class="topic-main"><div class="name">'+esc(t.name)+'</div>'
++'<div class="topic-meta"><span class="pill diff-'+t.difficulty+'">'+diffLabel(t.difficulty)+'</span><span class="pill imp-'+t.importance+'">'+impLabel(t.importance)+'</span>'+(preview?'<span class="note-preview">'+esc(preview)+'</span>':'')+'</div></div></div>';
 }
 function renderChapter(){
 let sub=findSubject(state.subjectId); let ch=sub ? findChapter(sub, state.chapterId) : null;
 if(!sub || !ch){ goMain(); return; }
 let html='<div style="text-align:left"><button class="back" onclick="goSubject()">‹ '+esc(sub.name)+'</button></div>'
-+'<div class="pagehead"><h2>'+esc(ch.name)+'</h2><div class="count" style="font-size:13px;color:#86868b;margin-top:6px;font-weight:600">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'</div></div>'
-+'<div style="display:flex;gap:8px;justify-content:center;margin-top:16px">'
-+ddHTML('chapter-diff', ch.difficulty, DIFF_OPTS, 'data-subject="'+sub.id+'" data-chapter="'+ch.id+'"', 'dd-btn pill diff-'+ch.difficulty)
-+ddHTML('chapter-imp', ch.importance, IMP_OPTS, 'data-subject="'+sub.id+'" data-chapter="'+ch.id+'"', 'dd-btn pill imp-'+ch.importance)
-+'</div>'
++'<div class="pagehead"><h2>'+esc(ch.name)+'</h2>'
++'<button class="editbtn" onclick="openEditChapter(\''+sub.id+'\',\''+ch.id+'\')" aria-label="Edit chapter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button></div>'
++'<div class="chapter-meta" style="justify-content:center;margin-top:12px"><span class="pill diff-'+ch.difficulty+'">'+diffLabel(ch.difficulty)+'</span><span class="pill imp-'+ch.importance+'">'+impLabel(ch.importance)+'</span><span class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'</span></div>'
 +'<div class="section-label">Topics</div>';
 if(!ch.topics.length){
 html+='<div class="card" style="text-align:center"><p class="empty" style="margin:0">No topics yet.<br>Tap + below to add your first topic.</p></div>';
@@ -313,7 +321,7 @@ bindDrag();
 }
 
 /* Drag and drop — topics only, pointer-based, mouse and touch */
-let drag=null;
+let drag=null, dragJustEnded=false;
 function bindDrag(){
 document.querySelectorAll('.handle').forEach(h=>{
 h.addEventListener('pointerdown', e=>{
@@ -343,6 +351,7 @@ if(!drag) return;
 let d=drag; drag=null;
 d.row.classList.remove('dragging'); d.row.style.transform='';
 d.list.querySelectorAll('.topic').forEach(r=>r.classList.remove('drop-before','drop-after'));
+dragJustEnded=true; setTimeout(()=>{ dragJustEnded=false; }, 200);
 let order=[...d.list.querySelectorAll('.topic')].map(r=>r.dataset.topic);
 let sub=findSubject(d.subject); if(!sub) return; let ch=sub.chapters.find(c=>c.id===d.chapter); if(!ch) return;
 let byId={}; ch.topics.forEach(t=>byId[t.id]=t); ch.topics=order.map(id=>byId[id]).filter(Boolean);
@@ -432,10 +441,54 @@ openForm('Add Topic',
 let name=$('fTopicName').value.trim();
 if(!name){ showToast('Add a topic name first.'); $('fTopicName').focus(); return; }
 let diff=$('addTopicDiff').dataset.value, imp=$('addTopicImp').dataset.value;
-ch.topics.push({id:uid(), name:name, difficulty:diff, importance:imp});
+ch.topics.push({id:uid(), name:name, difficulty:diff, importance:imp, note:''});
 await saveSubject(sub); closeForm(); showToast('Topic added.'); render();
 });
 setTimeout(()=>{ let n=$('fTopicName'); if(n) n.focus(); }, 50);
+}
+
+
+/* Topic pop-up — tap a topic to see it. Difficulty / importance are fixed here;
+   only Edit topic can change them. */
+function openTopicPopup(e, subjectId, chapterId, topicId){
+if(e && e.target.closest('.handle')) return;
+if(dragJustEnded) return;
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+let t=ch.topics.find(x=>x.id===topicId); if(!t) return;
+openForm(t.name,
+'<div class="chapter-meta" style="justify-content:center;margin-top:0"><span class="pill diff-'+t.difficulty+'">'+diffLabel(t.difficulty)+'</span><span class="pill imp-'+t.importance+'">'+impLabel(t.importance)+'</span></div>'
++'<label>Note</label>'
++(t.note ? '<div class="view-note">'+esc(t.note)+'</div>' : '<p class="empty" style="margin:6px 0 0">No note yet. Tap Edit topic to add one.</p>'),
+'Edit topic', ()=>{ openEditTopic(subjectId, chapterId, topicId); });
+}
+function openEditTopic(subjectId, chapterId, topicId){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+let t=ch.topics.find(x=>x.id===topicId); if(!t) return;
+openForm('Edit Topic',
+'<label>Topic name</label><input type="text" id="fTopicName" value="'+esc(t.name)+'" autocomplete="off">'
++'<label>Difficulty</label>'+ddHTML('edittopic-diff', t.difficulty, DIFF_OPTS, 'id="editTopicDiff"', 'dd-btn')
++'<label>Importance</label>'+ddHTML('edittopic-imp', t.importance, IMP_OPTS, 'id="editTopicImp"', 'dd-btn')
++'<label>Note</label><textarea id="fTopicNote" placeholder="Add a note for this topic">'+esc(t.note||'')+'</textarea>',
+'Save', async ()=>{
+let name=$('fTopicName').value.trim();
+if(!name){ showToast('Add a topic name first.'); $('fTopicName').focus(); return; }
+t.name=name; t.difficulty=$('editTopicDiff').dataset.value; t.importance=$('editTopicImp').dataset.value; t.note=$('fTopicNote').value;
+await saveSubject(sub); closeForm(); showToast('Topic saved.'); render();
+},
+'<div style="margin-top:16px;text-align:center"><button class="smallbtn danger" onclick="closeForm();deleteTopic(\''+sub.id+'\',\''+ch.id+'\',\''+t.id+'\')">Delete topic</button></div>');
+}
+function openEditChapter(subjectId, chapterId){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+openForm('Edit Chapter',
+'<label>Chapter name</label><input type="text" id="fChName" value="'+esc(ch.name)+'" autocomplete="off">'
++'<label>Difficulty</label>'+ddHTML('editchapter-diff', ch.difficulty, DIFF_OPTS, 'id="editChDiff"', 'dd-btn')
++'<label>Importance</label>'+ddHTML('editchapter-imp', ch.importance, IMP_OPTS, 'id="editChImp"', 'dd-btn'),
+'Save', async ()=>{
+let name=$('fChName').value.trim();
+if(!name){ showToast('Add a chapter name first.'); $('fChName').focus(); return; }
+ch.name=name; ch.difficulty=$('editChDiff').dataset.value; ch.importance=$('editChImp').dataset.value;
+await saveSubject(sub); closeForm(); showToast('Chapter saved.'); render();
+});
 }
 
 /* Deletes — always with confirmation */
