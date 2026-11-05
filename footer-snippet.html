@@ -6,6 +6,11 @@
      FOOTER SNIPPET — paste this into a new tool's HOME PAGE ONLY,
      at the very bottom. Do not put it on inner pages of a tool
      (for example, not on Compartmentalizer's subject or chapter pages).
+     The footer is PINNED to the bottom of the viewport: it stays at
+     the bottom of the screen while the page scrolls, it is not part
+     of the page content. Give the page bottom padding (see CSS below)
+     so the last content is never hidden behind it, and keep any
+     floating button above the footer (bottom: 64px on the home page).
      ============================================================ -->
 
 <!-- HTML — paste at the bottom of the tool's home page -->
@@ -13,7 +18,10 @@
 
 <!-- CSS — paste into the tool's <style> block -->
 <style>
-.site-footer{margin-top:28px;padding-top:18px;border-top:1px solid #d2d2d7;color:#86868b;font-size:13px;text-align:center}
+.site-footer{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid #d2d2d7;padding:14px 20px;color:#86868b;font-size:13px;text-align:center}
+/* Room for the pinned footer — add to the page's body or wrapper so
+   content can scroll fully above it: */
+body{padding-bottom:64px}
 .site-footer b{color:#1d1d1f}
 .site-footer a{color:#1d1d1f;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px;margin-left:12px}
 .site-footer a svg{width:15px;height:15px}

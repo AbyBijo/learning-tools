@@ -16,7 +16,7 @@ input:focus,textarea:focus,button:focus{outline:none!important;box-shadow:none!i
 ::selection{background:#e5e5ea;color:#1d1d1f}
 *{box-sizing:border-box}
 html{color-scheme:light}
-body{margin:0;background:#f5f5f7;color:#1d1d1f;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;text-align:center;-webkit-font-smoothing:antialiased}
+body{margin:0;background:#f5f5f7;color:#1d1d1f;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;text-align:center;-webkit-font-smoothing:antialiased;padding-bottom:64px}
 .wrap{max-width:760px;margin:0 auto;padding:32px 20px 110px}
 .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#86868b;font-weight:600}
 h1{font-size:40px;line-height:1.05;letter-spacing:-.03em;margin:10px 0 8px;font-weight:800}
@@ -80,6 +80,7 @@ textarea{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;bo
 /* FAB — one + button, bottom-right, action follows the page */
 .fab{position:fixed;right:20px;bottom:24px;width:56px;height:56px;border-radius:50%;border:0;background:#1d1d1f;color:#fff;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.22);z-index:40}
 .fab:active{transform:scale(.96)}
+body.home-view .fab{bottom:64px}
 .empty{color:#86868b;font-size:14px}
 /* Custom pop-ups — blurred backdrop, scale-in */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
@@ -133,7 +134,7 @@ html,body{background:#fff}
 /* Explore more tools + personal footer — home page only */
 .explore{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:20px;padding:18px 22px;margin-top:14px;box-shadow:0 1px 2px rgba(0,0,0,.05);color:#1d1d1f;text-decoration:none;font-weight:700;font-size:16px}
 .explore span:last-child{color:#0071e3}
-.site-footer{margin-top:28px;padding-top:18px;border-top:1px solid #d2d2d7;color:#86868b;font-size:13px;text-align:center}
+.site-footer{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid #d2d2d7;padding:14px 20px;color:#86868b;font-size:13px;text-align:center}
 .site-footer b{color:#1d1d1f}
 .site-footer a{color:#1d1d1f;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px;margin-left:12px}
 .site-footer a svg{width:15px;height:15px}
@@ -336,6 +337,7 @@ else if(state.view==='chapter') openAddTopic(state.subjectId, state.chapterId);
 /* Render */
 function render(){
 savePlace();
+document.body.classList.toggle('home-view', state.view==='main');
 $('viewMain').style.display = state.view==='main' ? 'block':'none';
 $('viewSubject').style.display = state.view==='subject' ? 'block':'none';
 $('viewChapter').style.display = state.view==='chapter' ? 'block':'none';

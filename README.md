@@ -32,9 +32,13 @@ To add a tool:
 
 ## Footer (home pages only)
 
-Every tool's home page — and the index page — carries the same footer at the
-very bottom: **Aby Bijo**, with links to GitHub (https://github.com/AbyBijo)
-and LinkedIn (https://www.linkedin.com/in/aby-bijo-102359282).
+Every tool's home page — and the index page — carries the same footer,
+pinned to the bottom of the screen: **Aby Bijo**, with links to GitHub
+(https://github.com/AbyBijo) and LinkedIn
+(https://www.linkedin.com/in/aby-bijo-102359282). It stays at the bottom
+while the page scrolls; it is not part of the page content. Give the page
+bottom padding (64px, see `footer-snippet.html`) so the last content is
+never hidden behind it, and keep any floating button above the footer.
 
 The footer goes on the home page only. Do not put it on a tool's inner pages
 (for example, not on Compartmentalizer's subject or chapter pages).

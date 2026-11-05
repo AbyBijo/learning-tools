@@ -10,7 +10,7 @@
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#f5f5f7;color:#1d1d1f;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;text-align:center;-webkit-font-smoothing:antialiased}
-.wrap{max-width:760px;margin:0 auto;padding:32px 20px 48px}
+.wrap{max-width:760px;margin:0 auto;padding:32px 20px 96px}
 .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#86868b;font-weight:600}
 h1{font-size:40px;line-height:1.05;letter-spacing:-.03em;margin:10px 0 8px;font-weight:800}
 h2{font-size:17px;letter-spacing:-.01em;margin:0 0 12px;font-weight:700}
@@ -81,11 +81,11 @@ body.dark .pillok{background:#12283d;color:#64a8ff;border-color:#1e3a5c}
 body.dark .pillfail{background:#3a1a1a;color:#ff6961;border-color:#5a2a2a}
 body.dark .btn.danger:disabled{background:#2c2c2e;color:#98989d}
 
-.site-footer{margin-top:28px;padding-top:18px;border-top:1px solid #d2d2d7;color:#86868b;font-size:13px;text-align:center}
+.site-footer{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid #d2d2d7;padding:14px 20px;color:#86868b;font-size:13px;text-align:center}
 .site-footer b{color:#1d1d1f}
 .site-footer a{color:#1d1d1f;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px;margin-left:12px}
 .site-footer a svg{width:15px;height:15px}
-body.dark .site-footer{border-color:#38383a;color:#98989d}
+body.dark .site-footer{border-color:#38383a;color:#98989d;background:#1c1c1e}
 body.dark .site-footer b,body.dark .site-footer a{color:#f5f5f7}
 
 .section{margin-top:28px}
