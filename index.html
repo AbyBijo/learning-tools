@@ -68,7 +68,7 @@ footer{margin-top:48px;padding-top:24px;border-top:1px solid #d2d2d7;display:fle
   </header>
 
   <section class="section">
-    <div class="section-head"><h2>All tools</h2><span id="tool-count">1 tool</span></div>
+    <div class="section-head"><h2>All tools</h2><span id="tool-count">2 tools</span></div>
     <div class="grid" id="tool-grid">
       <a class="card featured" href="tools/exam-timer.html">
         <span class="icon" aria-hidden="true">
@@ -78,6 +78,17 @@ footer{margin-top:48px;padding-top:24px;border-top:1px solid #d2d2d7;display:fle
           <h3>Exam Timer</h3>
           <p>General exam timer with a PDF paper beside the clock. Choose a duration, load any paper, start — then no pause, no stop.</p>
           <span class="meta"><span class="pill">1h 30m</span><span class="pill">1h 45m</span><span class="pill">2h</span><span class="pill">Load any PDF</span></span>
+        </span>
+        <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="card" href="tools/compartmentalizer.html">
+        <span class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18"/></svg>
+        </span>
+        <span style="flex:1;min-width:0">
+          <h3>Compartmentalizer</h3>
+          <p>Organise subjects into chapters and topics. Add exam time and max marks, drag topics to reorder, and keep everything saved in this browser.</p>
+          <span class="meta"><span class="pill">Subjects</span><span class="pill">Chapters</span><span class="pill">Topics</span><span class="pill">Drag to reorder</span></span>
         </span>
         <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
       </a>
@@ -103,7 +114,7 @@ footer{margin-top:48px;padding-top:24px;border-top:1px solid #d2d2d7;display:fle
 (function () {
   var grid = document.getElementById('tool-grid');
   var count = document.getElementById('tool-count');
-  var seen = { 'exam-timer.html': true };
+  var seen = { 'exam-timer.html': true, 'compartmentalizer.html': true };
 
   function titleFromFile(name) {
     var base = name.replace(/\.html$/i, '').replace(/[-_]+/g, ' ').trim();
@@ -134,7 +145,7 @@ footer{margin-top:48px;padding-top:24px;border-top:1px solid #d2d2d7;display:fle
           grid.appendChild(a);
           added++;
         });
-      if (added) count.textContent = (1 + added) + ' tools';
+      if (added) count.textContent = (2 + added) + ' tools';
     })
     .catch(function () { /* static list above remains usable */ });
 })();
