@@ -7,80 +7,79 @@
 <title>Compartmentalizer</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* UNIVERSAL RULE — no blue overlay, ever.
-   No blue tap highlight, no blue focus ring on any interactive element.
-   Focus is shown only as a neutral grey border. */
+/* UNIVERSAL RULE — no blue overlay, ever. No blue tap highlight, no blue focus ring. Focus is a neutral grey border only. */
 *{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent}
 *:focus{outline:none!important}
 *:focus-visible{outline:none!important;box-shadow:none!important}
-input:focus,select:focus,textarea:focus,button:focus{outline:none!important;box-shadow:none!important;border-color:#a1a1a6!important}
+input:focus,textarea:focus,button:focus{outline:none!important;box-shadow:none!important;border-color:#a1a1a6!important}
 ::selection{background:#e5e5ea;color:#1d1d1f}
 *{box-sizing:border-box}
 body{margin:0;background:#f5f5f7;color:#1d1d1f;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;text-align:center;-webkit-font-smoothing:antialiased}
-.wrap{max-width:760px;margin:0 auto;padding:32px 20px 80px}
+.wrap{max-width:760px;margin:0 auto;padding:32px 20px 110px}
 .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#86868b;font-weight:600}
 h1{font-size:40px;line-height:1.05;letter-spacing:-.03em;margin:10px 0 8px;font-weight:800}
 .sub{color:#86868b;font-size:15px;margin:0}
 .saved{font-size:12px;color:#86868b;margin-top:10px}
 .saved b{color:#1d1d1f}
 .card{background:#fff;border-radius:20px;padding:24px;margin-top:20px;box-shadow:0 1px 2px rgba(0,0,0,.05);text-align:left}
-.card.center{text-align:center}
 h2{font-size:17px;letter-spacing:-.01em;margin:0 0 14px;font-weight:700}
 label{display:block;font-size:12px;font-weight:600;color:#86868b;letter-spacing:.04em;text-transform:uppercase;margin:14px 0 6px;text-align:left}
-input[type=text],input[type=number],select{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;border-radius:12px;padding:13px 14px;font-size:15px;font-family:Inter,sans-serif}
-select{cursor:pointer}
+input[type=text],input[type=number]{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;border-radius:12px;padding:13px 14px;font-size:15px;font-family:Inter,sans-serif}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:560px){.grid2{grid-template-columns:1fr}h1{font-size:32px}}
 .btn{border:0;border-radius:12px;padding:15px 18px;font-size:15px;font-weight:700;cursor:pointer;background:#1d1d1f;color:#fff;font-family:Inter,sans-serif;width:100%}
-.btn.blue{background:#0071e3}
 .btn.sec{background:#f5f5f7;color:#1d1d1f;border:1px solid #e2e2e7}
 .btn.danger{background:#fff;color:#c81e1e;border:1px solid #f0c6c6}
 .btn:active{transform:scale(.99)}
-.btn:disabled{opacity:.45;cursor:not-allowed}
 .smallbtn{border:1px solid #e2e2e7;background:#fff;color:#1d1d1f;border-radius:999px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif}
 .smallbtn.danger{color:#c81e1e;border-color:#f0c6c6}
-.subject{margin-top:16px}
-.subjhead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;cursor:pointer}
-.subjhead h3{margin:0;font-size:19px;letter-spacing:-.02em}
+.back{border:0;background:transparent;color:#0071e3;font-size:15px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;padding:4px 0;text-align:left}
 .codepill{display:inline-block;background:#f5f5f7;border:1px solid #e2e2e7;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;color:#6e6e73;margin-top:6px}
+/* Subject tiles — full-width, lengthwise */
+.subj-tile{background:#fff;border-radius:20px;padding:20px 22px;margin-top:14px;box-shadow:0 1px 2px rgba(0,0,0,.05);display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;text-align:left;transition:transform .15s ease,box-shadow .15s ease}
+.subj-tile:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.subj-tile h3{margin:0;font-size:19px;letter-spacing:-.02em}
+.subj-tile .meta{font-size:12px;color:#86868b;margin-top:5px;font-weight:600}
 .chev{font-size:20px;color:#86868b;flex-shrink:0}
-.overview{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+/* Subject / chapter page header */
+.pagehead{position:relative;text-align:center;padding:8px 44px 0}
+.pagehead h2{font-size:28px;letter-spacing:-.02em;margin:0}
+.editbtn{position:absolute;top:0;right:0;width:38px;height:38px;border-radius:50%;border:1px solid #e2e2e7;background:#fff;color:#1d1d1f;cursor:pointer;display:grid;place-items:center;font-family:Inter,sans-serif}
+.editbtn svg{width:17px;height:17px}
+.overview{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
 @media(max-width:560px){.overview{grid-template-columns:repeat(2,1fr)}}
-.stat{background:#f5f5f7;border-radius:12px;padding:12px}
-.stat b{display:block;font-size:17px}
+.stat{background:#fff;border:1px solid #e8e8ed;border-radius:16px;padding:14px 10px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.stat b{display:block;font-size:18px}
 .stat span{font-size:11px;color:#86868b;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.chapter{border-top:1px solid #e2e2e7;margin-top:18px;padding-top:16px}
-.chapter h4{margin:0 0 4px;font-size:16px}
-.chapter .count{font-size:12px;color:#86868b}
-.topic{display:flex;gap:8px;align-items:center;background:#f5f5f7;border:1px solid #e2e2e7;border-radius:12px;padding:9px 10px;margin-top:8px;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}
+/* Chapter rows */
+.chapter-row{background:#fff;border-radius:20px;padding:18px 20px;margin-top:12px;box-shadow:0 1px 2px rgba(0,0,0,.05);display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;text-align:left}
+.chapter-row h4{margin:0;font-size:16px}
+.chapter-row .count{font-size:12px;color:#86868b;margin-top:4px;font-weight:600}
+.chapter-dds{display:flex;gap:8px;flex-shrink:0}
+.section-label{font-size:12px;font-weight:600;color:#86868b;letter-spacing:.06em;text-transform:uppercase;text-align:left;margin:26px 0 0}
+/* Topics */
+.topic{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #e2e2e7;border-radius:14px;padding:9px 10px;margin-top:8px;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}
 .topic.dragging{opacity:.92;box-shadow:0 12px 28px rgba(0,0,0,.18);z-index:5;position:relative}
 .topic.drop-before{border-top:2px solid #1d1d1f}
 .topic.drop-after{border-bottom:2px solid #1d1d1f}
 .handle{touch-action:none;cursor:grab;color:#a1a1a6;font-size:18px;padding:6px 4px;flex-shrink:0;user-select:none;-webkit-user-select:none}
 .handle:active{cursor:grabbing}
 .topic .name{flex:1;font-size:14px;font-weight:600;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.topic select{width:auto;flex-shrink:0;padding:8px 8px;font-size:12px;font-weight:600;border-radius:999px;background:#fff;min-width:0}
-.topic select.diff-easy{color:#137333}
-.topic select.diff-hard{color:#c81e1e}
-.topic select.imp-very{color:#7c2d12;font-weight:700}
 .del{border:0;background:transparent;color:#c81e1e;font-size:18px;cursor:pointer;padding:6px;flex-shrink:0}
-.addrow{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.addrow input[type=text]{flex:2;min-width:140px}
-.addrow select{flex:1;min-width:110px}
-.addrow .btn{flex:0 0 auto;width:auto;padding:12px 16px}
-.fabwrap{position:sticky;bottom:12px;display:flex;justify-content:flex-end;margin-top:16px;z-index:5}
-.fab{width:56px;height:56px;border-radius:50%;border:0;background:#1d1d1f;color:#fff;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.22)}
+/* FAB — one + button, bottom-right, action follows the page */
+.fab{position:fixed;right:20px;bottom:24px;width:56px;height:56px;border-radius:50%;border:0;background:#1d1d1f;color:#fff;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.22);z-index:40}
 .fab:active{transform:scale(.96)}
-.addform{background:#f5f5f7;border:1px solid #e2e2e7;border-radius:14px;padding:14px;margin-top:12px}
-#modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
-#modal.open{display:flex}
-.modalbox{background:#fff;border-radius:20px;padding:24px;width:100%;max-width:420px;text-align:center}
-.modalbox h2{font-size:21px}
+.empty{color:#86868b;font-size:14px}
+/* Custom pop-ups — blurred backdrop, scale-in */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal.open{display:flex}
+.modalbox{background:#fff;border-radius:20px;padding:24px;width:100%;max-width:420px;text-align:left;animation:popin .22s ease;max-height:88vh;overflow-y:auto}
+@keyframes popin{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modalbox h2{font-size:21px;text-align:center}
 .modalbox p{color:#86868b;font-size:14px;line-height:1.6}
+.modalbox .center{text-align:center}
 .row{display:flex;gap:10px;margin-top:16px}
 .row .btn{flex:1}
-.empty{color:#86868b;font-size:14px}
-
 /* Custom dropdowns — no native select anywhere. Custom CSS chevron, no text arrow. */
 .dd{position:relative}
 .dd-btn{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;border-radius:12px;padding:13px 14px;font-size:15px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;text-align:left}
@@ -99,11 +98,6 @@ select{cursor:pointer}
 /* Custom toast — no native alert anywhere */
 #toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:28px;background:#1d1d1f;color:#fff;padding:13px 20px;border-radius:999px;font-weight:600;font-size:14px;z-index:80;box-shadow:0 12px 32px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;max-width:92vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-/* Custom pop-up — centred, blurred backdrop, gentle scale-in */
-#modal{background:rgba(0,0,0,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.modalbox{animation:popin .22s ease}
-@keyframes popin{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
-
 </style>
 </head>
 <body>
@@ -115,52 +109,38 @@ select{cursor:pointer}
 <p class="saved"><b>● Saved in this browser</b></p>
 </header>
 
-<div class="card">
-<h2>Add a subject</h2>
-<label for="sName">Subject name</label>
-<input type="text" id="sName" placeholder="e.g. Quantitative Techniques" autocomplete="off">
-<label for="sCode">Subject code</label>
-<input type="text" id="sCode" placeholder="e.g. MG3CCRBCA200" autocomplete="off">
-<div class="grid2">
-<div>
-<label for="sDur">Exam duration</label>
-<div class="dd" id="durDD" data-kind="add-dur" data-value="120"><button type="button" class="dd-btn"><span class="dd-label">2 hours</span><span class="chev-css"></span></button><div class="dd-menu"><button type="button" class="dd-opt" data-value="60"><span>1 hour</span><span class="tick"></span></button><button type="button" class="dd-opt" data-value="90"><span>1 hour 30 minutes</span><span class="tick"></span></button><button type="button" class="dd-opt" data-value="120"><span>2 hours</span><span class="tick">✓</span></button><button type="button" class="dd-opt" data-value="custom"><span>Custom…</span><span class="tick"></span></button></div></div>
-</div>
-<div>
-<label for="sMarks">Maximum marks</label>
-<input type="number" id="sMarks" placeholder="e.g. 70" min="1" inputmode="numeric">
-</div>
-</div>
-<div id="customDurWrap" style="display:none">
-<label for="sCustomMin">Custom duration — minutes</label>
-<input type="number" id="sCustomMin" placeholder="e.g. 30 or 45" min="5" max="600" inputmode="numeric">
-</div>
-<div style="margin-top:18px"><button class="btn" onclick="addSubject()">Add subject</button></div>
-<p class="empty" style="margin:12px 0 0">Start with one subject. Add more any time.</p>
+<div id="viewMain"></div>
+<div id="viewSubject" style="display:none"></div>
+<div id="viewChapter" style="display:none"></div>
 </div>
 
-<div id="subjectsWrap"></div>
-
-<div class="card center" id="emptyCard" style="display:none">
-<p class="empty" style="margin:0">No subjects yet.<br>Add your first subject above.</p>
-</div>
-</div>
+<button class="fab" id="fab" onclick="fabAction()" aria-label="Add">+</button>
 
 <div id="toast" role="status"></div>
-<div id="modal"><div class="modalbox">
+
+<div class="modal" id="formModal"><div class="modalbox">
+<h2 id="formTitle"></h2>
+<div id="formBody"></div>
+<div class="row"><button class="btn sec" onclick="closeForm()">Cancel</button><button class="btn" id="formPrimary" onclick="submitForm()">Add</button></div>
+<div id="formExtra"></div>
+</div></div>
+
+<div class="modal" id="modal"><div class="modalbox">
 <h2 id="modalTitle">Delete?</h2>
-<p id="modalText"></p>
+<p id="modalText" class="center"></p>
 <div class="row"><button class="btn sec" onclick="closeModal()">Cancel</button><button class="btn danger" id="modalConfirm">Delete</button></div>
 </div></div>
 
 <script>
 const DB_NAME='ChapterManagerDB', STORE='subjects', LS_FALLBACK='chapterManagerFallbackV1';
 let db=null, idbReady=false;
-let state={subjects:[], openId:null, editingId:null, addingChapterFor:null};
+let state={subjects:[], view:'main', subjectId:null, chapterId:null};
 function $(id){return document.getElementById(id);}
 function uid(){return 'id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fmtDur(min){ if(min<60) return min+'m'; let h=Math.floor(min/60), m=min%60; return m? h+'h '+m+'m' : h+'h'; }
+function findSubject(id){ return state.subjects.find(s=>s.id===id); }
+function findChapter(sub, id){ return sub ? sub.chapters.find(c=>c.id===id) : null; }
 function openDB(){ return new Promise(res=>{ try{ let req=indexedDB.open(DB_NAME,1); req.onupgradeneeded=e=>{ e.target.result.createObjectStore(STORE,{keyPath:'id'}); }; req.onsuccess=e=>{ db=e.target.result; idbReady=true; res(true); }; req.onerror=()=>{ idbReady=false; res(false); }; }catch(e){ idbReady=false; res(false); } }); }
 function idbAll(){ return new Promise(res=>{ let tx=db.transaction(STORE,'readonly'); let req=tx.objectStore(STORE).getAll(); req.onsuccess=()=>res(req.result||[]); req.onerror=()=>res([]); }); }
 function idbPut(sub){ return new Promise(res=>{ let tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(sub); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }); }
@@ -169,79 +149,26 @@ async function loadAll(){
 await openDB();
 if(idbReady){ state.subjects=await idbAll(); }
 else { try{ state.subjects=JSON.parse(localStorage.getItem(LS_FALLBACK)||'[]'); }catch(e){ state.subjects=[]; } }
-state.subjects.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+let migrated=false;
+state.subjects.forEach(sub=>{
+sub.chapters=sub.chapters||[];
+sub.chapters.forEach(ch=>{
+if(!ch.difficulty){ ch.difficulty='medium'; migrated=true; }
+if(!ch.importance){ ch.importance='important'; migrated=true; }
+ch.topics=(ch.topics||[]).map(t=>({difficulty:'medium', importance:'important', ...t}));
+});
+});
+if(migrated && idbReady){ for(let sub of state.subjects) await idbPut(sub); }
 render();
 }
 async function saveSubject(sub){
-if(idbReady){ await idbPut(sub); } else { localStorage.setItem(LS_FALLBACK, JSON.stringify(state.subjects)); }
-}
-async function saveAll(){
-if(idbReady){ for(let s of state.subjects) await idbPut(s); } else { localStorage.setItem(LS_FALLBACK, JSON.stringify(state.subjects)); }
+if(idbReady){ await idbPut(sub); }
+else { try{ localStorage.setItem(LS_FALLBACK, JSON.stringify(state.subjects)); }catch(e){} }
 }
 async function deleteSubjectFromStore(id){
-if(idbReady){ await idbDel(id); } else { localStorage.setItem(LS_FALLBACK, JSON.stringify(state.subjects)); }
+if(idbReady){ await idbDel(id); }
+else { try{ localStorage.setItem(LS_FALLBACK, JSON.stringify(state.subjects)); }catch(e){} }
 }
-function findSubject(id){ return state.subjects.find(s=>s.id===id); }
-
-/* Subject */
-async function addSubject(){
-let name=$('sName').value.trim(), code=$('sCode').value.trim();
-let marks=parseInt($('sMarks').value,10);
-let durVal=$('durDD').dataset.value, min = durVal==='custom' ? parseInt($('sCustomMin').value,10) : parseInt(durVal,10);
-if(!name){ showToast('Add a subject name first.'); $('sName').focus(); return; }
-if(!marks || marks<=0){ showToast('Add the maximum marks, e.g. 70.'); $('sMarks').focus(); return; }
-if(!min || min<=0){ showToast('Choose a duration, or type custom minutes.'); return; }
-let sub={id:uid(), name:name, code:code, durationMin:min, maxMarks:marks, createdAt:Date.now(), chapters:[]};
-state.subjects.push(sub); await saveSubject(sub); state.openId=sub.id;
-$('sName').value=''; $('sCode').value=''; $('sMarks').value=''; $('sCustomMin').value=''; $('durDD').dataset.value='120'; $('durDD').querySelector('.dd-label').textContent='2 hours'; $('durDD').querySelectorAll('.tick').forEach(t=>t.textContent=''); let _tick=$('durDD').querySelector('.dd-opt[data-value="120"] .tick'); if(_tick) _tick.textContent='✓'; $('customDurWrap').style.display='none'; showToast('Subject added.');
-render();
-}
-function toggleSubject(id){ state.openId = state.openId===id ? null : id; state.editingId=null; state.addingChapterFor=null; render(); }
-
-/* Chapters — structured order, NOT reorderable */
-function showAddChapter(subjectId){ state.addingChapterFor=subjectId; render(); let inp=$('chapterInput-'+subjectId); if(inp) inp.focus(); }
-async function addChapter(subjectId){
-let inp=$('chapterInput-'+subjectId); if(!inp) return; let name=inp.value.trim(); if(!name){ showToast('Add a chapter name first.'); return; }
-let sub=findSubject(subjectId); sub.chapters.push({id:uid(), name:name, topics:[]}); await saveSubject(sub); state.addingChapterFor=null; showToast('Chapter added.'); render();
-}
-async function deleteChapter(subjectId, chapterId){
-let sub=findSubject(subjectId); let ch=sub.chapters.find(c=>c.id===chapterId);
-askDelete('Delete chapter?', '“'+ch.name+'” and all its topics will be removed. This cannot be undone.', async ()=>{ sub.chapters=sub.chapters.filter(c=>c.id!==chapterId); await saveSubject(sub); showToast('Chapter deleted.'); render(); });
-}
-
-/* Topics */
-async function addTopic(subjectId, chapterId){
-let inp=$('topicInput-'+chapterId); if(!inp) return; let name=inp.value.trim(); if(!name){ showToast('Add a topic name first.'); return; }
-let diff=document.getElementById('addDiff-'+chapterId).dataset.value, imp=document.getElementById('addImp-'+chapterId).dataset.value;
-let sub=findSubject(subjectId); let ch=sub.chapters.find(c=>c.id===chapterId);
-ch.topics.push({id:uid(), name:name, difficulty:diff, importance:imp}); await saveSubject(sub); showToast('Topic added.'); render();
-}
-async function setTopicField(subjectId, chapterId, topicId, field, value){
-let sub=findSubject(subjectId); let ch=sub.chapters.find(c=>c.id===chapterId); let t=ch.topics.find(x=>x.id===topicId); if(!t) return; t[field]=value; await saveSubject(sub);
-}
-async function deleteTopic(subjectId, chapterId, topicId){
-let sub=findSubject(subjectId); let ch=sub.chapters.find(c=>c.id===chapterId); let t=ch.topics.find(x=>x.id===topicId);
-askDelete('Delete topic?', '“'+t.name+'” will be removed from '+ch.name+'. This cannot be undone.', async ()=>{ ch.topics=ch.topics.filter(x=>x.id!==topicId); await saveSubject(sub); render(); });
-}
-async function deleteSubject(subjectId){
-let sub=findSubject(subjectId);
-askDelete('Delete subject?', '“'+sub.name+'” and all its chapters and topics will be removed. This cannot be undone.', async ()=>{ state.subjects=state.subjects.filter(s=>s.id!==subjectId); await deleteSubjectFromStore(subjectId); if(state.openId===subjectId) state.openId=null; render(); });
-}
-function editSubject(id){ state.editingId=id; render(); }
-async function saveSubjectEdit(id){
-let sub=findSubject(id); let name=$('editName-'+id).value.trim(); let code=$('editCode-'+id).value.trim(); let marks=parseInt($('editMarks-'+id).value,10); let durVal=document.getElementById('editDur-'+id).dataset.value; let min=durVal==='custom'?parseInt($('editCustom-'+id).value,10):parseInt(durVal,10);
-if(!name || !marks || !min){ showToast('Fill in name, maximum marks and duration.'); return; }
-sub.name=name; sub.code=code; sub.maxMarks=marks; sub.durationMin=min; state.editingId=null; await saveSubject(sub); render();
-}
-
-/* Delete confirmation */
-let confirmAction=null;
-function askDelete(title, text, action){ $('modalTitle').textContent=title; $('modalText').textContent=text; confirmAction=action; $('modal').classList.add('open'); }
-function closeModal(){ $('modal').classList.remove('open'); confirmAction=null; }
-$('modalConfirm').onclick=async ()=>{ let a=confirmAction; closeModal(); if(a) await a(); };
-
-
-/* Custom toast + custom dropdowns — no native alert, no native select */
 let toastTimer=null;
 function showToast(msg){ let t=$('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
 function closeAllDropdowns(){ document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')); }
@@ -253,6 +180,14 @@ let cur=opts.find(o=>String(o.v)===String(value))||opts[0];
 let menu=opts.map(o=>'<button type="button" class="dd-opt" data-value="'+o.v+'"><span>'+o.l+'</span><span class="tick">'+(String(o.v)===String(value)?'✓':'')+'</span></button>').join('');
 return '<div class="dd" data-kind="'+kind+'" data-value="'+value+'" '+extra+'><button type="button" class="'+btnClass+'"><span class="dd-label">'+cur.l+'</span><span class="chev-css"></span></button><div class="dd-menu">'+menu+'</div></div>';
 }
+function durDDHTML(kind, value, id){
+let v=[60,90,120].includes(value)?String(value):'custom';
+return ddHTML(kind, v, DUR_OPTS, 'id="'+id+'"', 'dd-btn');
+}
+</script>
+
+<script>
+/* Custom dropdown handling — one delegation for every dropdown on every page */
 document.addEventListener('click', e=>{
 let btn=e.target.closest('.dd-btn');
 if(btn){ e.stopPropagation(); let dd=btn.closest('.dd'); let was=dd.classList.contains('open'); closeAllDropdowns(); if(!was) dd.classList.add('open'); return; }
@@ -263,16 +198,92 @@ dd.dataset.value=val; dd.querySelector('.dd-label').textContent=label;
 dd.querySelectorAll('.tick').forEach(t=>t.textContent=''); let tick=opt.querySelector('.tick'); if(tick) tick.textContent='✓';
 if(kind==='topic-diff'){ dd.querySelector('.dd-btn').className='dd-btn pill diff-'+val; setTopicField(dd.dataset.subject, dd.dataset.chapter, dd.dataset.topic, 'difficulty', val); }
 else if(kind==='topic-imp'){ dd.querySelector('.dd-btn').className='dd-btn pill imp-'+val; setTopicField(dd.dataset.subject, dd.dataset.chapter, dd.dataset.topic, 'importance', val); }
+else if(kind==='chapter-diff'){ dd.querySelector('.dd-btn').className='dd-btn pill diff-'+val; setChapterField(dd.dataset.subject, dd.dataset.chapter, 'difficulty', val); }
+else if(kind==='chapter-imp'){ dd.querySelector('.dd-btn').className='dd-btn pill imp-'+val; setChapterField(dd.dataset.subject, dd.dataset.chapter, 'importance', val); }
 else if(kind==='add-dur'){ let w=$('customDurWrap'); if(w) w.style.display = val==='custom' ? 'block':'none'; }
-else if(kind==='edit-dur'){ let w=$('editCustomWrap-'+dd.dataset.subject); if(w) w.style.display = val==='custom' ? 'block':'none'; }
+else if(kind==='edit-dur'){ let w=$('editCustomWrap'); if(w) w.style.display = val==='custom' ? 'block':'none'; }
 closeAllDropdowns(); return;
 }
 if(!e.target.closest('.dd')) closeAllDropdowns();
 });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAllDropdowns(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeAllDropdowns(); closeForm(); } });
 
-/* Drag and drop — topics only, pointer-based, works with mouse and touch */
-let drag=null;
+/* Delete pop-up (custom) */
+let confirmAction=null;
+function askDelete(title, text, action){ $('modalTitle').textContent=title; $('modalText').textContent=text; confirmAction=action; $('modal').classList.add('open'); }
+function closeModal(){ $('modal').classList.remove('open'); confirmAction=null; }
+$('modalConfirm').onclick=async ()=>{ let a=confirmAction; closeModal(); if(a) await a(); };
+
+/* Form pop-up (custom) — Add Subject / Edit Subject / Add Chapter / Add Topic */
+let formSubmit=null;
+function openForm(title, bodyHTML, primaryLabel, onSubmit, extraHTML){
+$('formTitle').textContent=title; $('formBody').innerHTML=bodyHTML;
+$('formPrimary').textContent=primaryLabel; $('formExtra').innerHTML=extraHTML||'';
+formSubmit=onSubmit; $('formModal').classList.add('open');
+}
+function closeForm(){ $('formModal').classList.remove('open'); formSubmit=null; }
+$('formModal').addEventListener('click', e=>{ if(e.target===$('formModal')) closeForm(); });
+$('modal').addEventListener('click', e=>{ if(e.target===$('modal')) closeModal(); });
+function submitForm(){ if(formSubmit) formSubmit(); }
+
+/* Navigation */
+function goMain(){ state.view='main'; state.subjectId=null; state.chapterId=null; render(); }
+function openSubject(id){ state.view='subject'; state.subjectId=id; state.chapterId=null; render(); window.scrollTo(0,0); }
+function openChapter(e, subId, chId){
+if(e && e.target.closest('.dd')) return;
+if(e && e.target.closest('.del')) return;
+state.view='chapter'; state.subjectId=subId; state.chapterId=chId; render(); window.scrollTo(0,0);
+}
+function goSubject(){ state.view='subject'; state.chapterId=null; render(); window.scrollTo(0,0); }
+function fabAction(){
+if(state.view==='main') openAddSubject();
+else if(state.view==='subject') openAddChapter(state.subjectId);
+else if(state.view==='chapter') openAddTopic(state.subjectId, state.chapterId);
+}
+
+/* Render */
+function render(){
+$('viewMain').style.display = state.view==='main' ? 'block':'none';
+$('viewSubject').style.display = state.view==='subject' ? 'block':'none';
+$('viewChapter').style.display = state.view==='chapter' ? 'block':'none';
+if(state.view==='main') renderMain();
+else if(state.view==='subject') renderSubject();
+else if(state.view==='chapter') renderChapter();
+}
+function renderMain(){
+let w=$('viewMain');
+let html='<div style="text-align:left;margin-top:26px"><h2 style="margin:0">Subjects</h2></div>';
+if(!state.subjects.length){
+html+='<div class="card" style="text-align:center"><p class="empty" style="margin:0">No subjects yet.<br>Tap + below to add your first subject.</p></div>';
+} else {
+state.subjects.forEach(sub=>{
+let totalTopics=sub.chapters.reduce((n,c)=>n+c.topics.length,0);
+html+='<div class="subj-tile" onclick="openSubject(\''+sub.id+'\')"><div><h3>'+esc(sub.name)+'</h3>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')+'<div class="meta">'+sub.chapters.length+' chapter'+(sub.chapters.length===1?'':'s')+' · '+totalTopics+' topic'+(totalTopics===1?'':'s')+'</div></div><span class="chev">›</span></div>';
+});
+}
+w.innerHTML=html;
+}
+function renderSubject(){
+let sub=findSubject(state.subjectId); if(!sub){ goMain(); return; }
+let totalTopics=sub.chapters.reduce((n,c)=>n+c.topics.length,0);
+let html='<div style="text-align:left"><button class="back" onclick="goMain()">‹ Subjects</button></div>'
++'<div class="pagehead"><h2>'+esc(sub.name)+'</h2>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')
++'<button class="editbtn" onclick="openEditSubject(\''+sub.id+'\')" aria-label="Edit subject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button></div>'
++'<div class="overview"><div class="stat"><b>'+fmtDur(sub.durationMin)+'</b><span>Time</span></div><div class="stat"><b>'+sub.maxMarks+'</b><span>Marks</span></div><div class="stat"><b>'+sub.chapters.length+'</b><span>Chapters</span></div><div class="stat"><b>'+totalTopics+'</b><span>Topics</span></div></div>'
++'<div class="section-label">Chapters</div>';
+if(!sub.chapters.length){
+html+='<div class="card" style="text-align:center"><p class="empty" style="margin:0">No chapters yet.<br>Tap + below to add your first chapter.</p></div>';
+} else {
+sub.chapters.forEach(ch=>{
+html+='<div class="chapter-row" onclick="openChapter(event,\''+sub.id+'\',\''+ch.id+'\')"><div><h4>'+esc(ch.name)+'</h4><div class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'</div></div>'
++'<div class="chapter-dds">'
++ddHTML('chapter-diff', ch.difficulty, DIFF_OPTS, 'data-subject="'+sub.id+'" data-chapter="'+ch.id+'"', 'dd-btn pill diff-'+ch.difficulty)
++ddHTML('chapter-imp', ch.importance, IMP_OPTS, 'data-subject="'+sub.id+'" data-chapter="'+ch.id+'"', 'dd-btn pill imp-'+ch.importance)
++'</div></div>';
+});
+}
+$('viewSubject').innerHTML=html;
+}
 function topicRowHTML(sub, ch, t){
 return '<div class="topic" data-topic="'+t.id+'" data-chapter="'+ch.id+'" data-subject="'+sub.id+'">'
 +'<span class="handle" data-drag="'+t.id+'" title="Drag to reorder">⠿</span>'
@@ -281,12 +292,34 @@ return '<div class="topic" data-topic="'+t.id+'" data-chapter="'+ch.id+'" data-s
 +ddHTML('topic-imp', t.importance, IMP_OPTS, 'data-subject="'+sub.id+'" data-chapter="'+ch.id+'" data-topic="'+t.id+'"', 'dd-btn pill imp-'+t.importance)
 +'<button class="del" onclick="deleteTopic(\''+sub.id+'\',\''+ch.id+'\',\''+t.id+'\')" aria-label="Delete topic">×</button></div>';
 }
+function renderChapter(){
+let sub=findSubject(state.subjectId); let ch=sub ? findChapter(sub, state.chapterId) : null;
+if(!sub || !ch){ goMain(); return; }
+let html='<div style="text-align:left"><button class="back" onclick="goSubject()">‹ '+esc(sub.name)+'</button></div>'
++'<div class="pagehead"><h2>'+esc(ch.name)+'</h2><div class="count" style="font-size:13px;color:#86868b;margin-top:6px;font-weight:600">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'</div></div>'
++'<div style="display:flex;gap:8px;justify-content:center;margin-top:16px">'
++ddHTML('chapter-diff', ch.difficulty, DIFF_OPTS, 'data-subject="'+sub.id+'" data-chapter="'+ch.id+'"', 'dd-btn pill diff-'+ch.difficulty)
++ddHTML('chapter-imp', ch.importance, IMP_OPTS, 'data-subject="'+sub.id+'" data-chapter="'+ch.id+'"', 'dd-btn pill imp-'+ch.importance)
++'</div>'
++'<div class="section-label">Topics</div>';
+if(!ch.topics.length){
+html+='<div class="card" style="text-align:center"><p class="empty" style="margin:0">No topics yet.<br>Tap + below to add your first topic.</p></div>';
+} else {
+html+='<div data-chapter-list="'+ch.id+'">'+ch.topics.map(t=>topicRowHTML(sub,ch,t)).join('')+'</div>';
+}
+html+='<div style="margin-top:22px;text-align:center"><button class="smallbtn danger" onclick="deleteChapter(\''+sub.id+'\',\''+ch.id+'\')">Delete chapter</button></div>';
+$('viewChapter').innerHTML=html;
+bindDrag();
+}
+
+/* Drag and drop — topics only, pointer-based, mouse and touch */
+let drag=null;
 function bindDrag(){
 document.querySelectorAll('.handle').forEach(h=>{
 h.addEventListener('pointerdown', e=>{
 e.preventDefault();
 let row=h.closest('.topic'); if(!row) return;
-let list=row.parentElement; let rows=[...list.querySelectorAll('.topic')];
+let list=row.parentElement;
 drag={row:row, list:list, startY:e.clientY, subject:row.dataset.subject, chapter:row.dataset.chapter};
 row.classList.add('dragging'); row.style.transform='translateY(0px)';
 try{ h.setPointerCapture(e.pointerId); }catch(err){}
@@ -315,55 +348,124 @@ let sub=findSubject(d.subject); if(!sub) return; let ch=sub.chapters.find(c=>c.i
 let byId={}; ch.topics.forEach(t=>byId[t.id]=t); ch.topics=order.map(id=>byId[id]).filter(Boolean);
 await saveSubject(sub); render();
 }
+</script>
 
-/* Render */
-function render(){
-let wrap=$('subjectsWrap'); wrap.innerHTML='';
-$('emptyCard').style.display=state.subjects.length?'none':'block';
-state.subjects.forEach(sub=>{
-let totalTopics=sub.chapters.reduce((n,c)=>n+c.topics.length,0);
-let isOpen=state.openId===sub.id, isEditing=state.editingId===sub.id;
-let div=document.createElement('div'); div.className='card subject';
-let head='';
-if(isEditing){
-head='<div class="grid2"><div><label>Subject name</label><input type="text" id="editName-'+sub.id+'" value="'+esc(sub.name)+'"></div><div><label>Subject code</label><input type="text" id="editCode-'+sub.id+'" value="'+esc(sub.code)+'"></div></div>'
-+'<div class="grid2"><div><label>Exam duration</label>'+ddHTML('edit-dur', [60,90,120].includes(sub.durationMin)?String(sub.durationMin):'custom', DUR_OPTS, 'id="editDur-'+sub.id+'" data-subject="'+sub.id+'"', 'dd-btn')+'</div>'
-+'<div><label>Maximum marks</label><input type="number" id="editMarks-'+sub.id+'" value="'+sub.maxMarks+'"></div></div>'
-+'<div id="editCustomWrap-'+sub.id+'" style="display:'+(![60,90,120].includes(sub.durationMin)?'block':'none')+'"><label>Custom duration — minutes</label><input type="number" id="editCustom-'+sub.id+'" value="'+sub.durationMin+'"></div>'
-+'<div class="row"><button class="btn" onclick="saveSubjectEdit(\''+sub.id+'\')">Save</button><button class="btn sec" onclick="state.editingId=null;render()">Cancel</button></div>';
-} else {
-head='<div class="subjhead" onclick="toggleSubject(\''+sub.id+'\')"><div><h3>'+esc(sub.name)+'</h3>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')+'</div><span class="chev">'+(isOpen?'⌃':'⌄')+'</span></div>'
-+'<div class="overview"><div class="stat"><b>'+fmtDur(sub.durationMin)+'</b><span>Exam time</span></div><div class="stat"><b>'+sub.maxMarks+'</b><span>Max marks</span></div><div class="stat"><b>'+sub.chapters.length+'</b><span>Chapters</span></div><div class="stat"><b>'+totalTopics+'</b><span>Topics</span></div></div>'
-+'<div style="display:flex;gap:8px;margin-top:14px"><button class="smallbtn" onclick="event.stopPropagation();editSubject(\''+sub.id+'\')">Edit</button><button class="smallbtn danger" onclick="event.stopPropagation();deleteSubject(\''+sub.id+'\')">Delete subject</button></div>';
+<script>
+/* Field changes from dropdowns */
+async function setChapterField(subjectId, chapterId, field, value){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+ch[field]=value; await saveSubject(sub);
 }
-div.innerHTML=head;
-if(isOpen && !isEditing){
-let body=document.createElement('div');
-if(!sub.chapters.length){ body.innerHTML='<p class="empty" style="margin:18px 0 0">No chapters yet. Tap + below to add your first chapter.</p>'; }
-sub.chapters.forEach(ch=>{
-let chDiv=document.createElement('div'); chDiv.className='chapter';
-let chHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><h4>'+esc(ch.name)+'</h4><div class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+' · Chapters stay in the order you added them</div></div><button class="smallbtn danger" onclick="deleteChapter(\''+sub.id+'\',\''+ch.id+'\')">Delete</button></div>'
-+'<div class="topics" data-chapter-list="'+ch.id+'">'
-+ch.topics.map(t=>topicRowHTML(sub,ch,t)).join('')
-+'</div>'
-+'<div class="addrow"><input type="text" id="topicInput-'+ch.id+'" placeholder="Add a topic" autocomplete="off">'
-+ddHTML('addtopic-diff', 'medium', DIFF_OPTS, 'id="addDiff-'+ch.id+'" data-chapter="'+ch.id+'"', 'dd-btn pill')
-+ddHTML('addtopic-imp', 'important', IMP_OPTS, 'id="addImp-'+ch.id+'" data-chapter="'+ch.id+'"', 'dd-btn pill')
-+'<button class="btn" onclick="addTopic(\''+sub.id+'\',\''+ch.id+'\')">Add</button></div>';
-chDiv.innerHTML=chHTML; body.appendChild(chDiv);
+async function setTopicField(subjectId, chapterId, topicId, field, value){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+let t=ch.topics.find(x=>x.id===topicId); if(!t) return;
+t[field]=value; await saveSubject(sub);
+}
+
+/* Pop-ups */
+function durationFields(kind, id, value, customValue){
+let isCustom=![60,90,120].includes(value);
+return '<label>Duration</label>'+durDDHTML(kind, value, id)
++'<div id="'+(kind==='edit-dur'?'editCustomWrap':'customDurWrap')+'" style="display:'+(isCustom?'block':'none')+'"><label>Custom duration — minutes</label><input type="number" id="'+(kind==='edit-dur'?'editCustomMin':'customMin')+'" value="'+(isCustom?value:'')+'" placeholder="e.g. 30 or 45" min="5" max="600" inputmode="numeric"></div>';
+}
+function readDuration(kind, id){
+let dd=$(id); let val=dd ? dd.dataset.value : '120';
+if(val==='custom'){ let inp=$(kind==='edit-dur'?'editCustomMin':'customMin'); return parseInt(inp.value,10); }
+return parseInt(val,10);
+}
+function openAddSubject(){
+openForm('Add Subject',
+'<label>Subject name</label><input type="text" id="fName" placeholder="e.g. Quantitative Techniques" autocomplete="off">'
++'<label>Subject code</label><input type="text" id="fCode" placeholder="e.g. MG3CCRBCA200" autocomplete="off">'
++durationFields('add-dur', 'durDD', 120, '')
++'<label>Maximum marks</label><input type="number" id="fMarks" placeholder="e.g. 70" min="1" inputmode="numeric">',
+'Add subject', async ()=>{
+let name=$('fName').value.trim(); let code=$('fCode').value.trim();
+let marks=parseInt($('fMarks').value,10); let min=readDuration('add-dur','durDD');
+if(!name){ showToast('Add a subject name first.'); $('fName').focus(); return; }
+if(!marks || marks<=0){ showToast('Add the maximum marks, e.g. 70.'); $('fMarks').focus(); return; }
+if(!min || min<=0){ showToast('Choose a duration, or type custom minutes.'); return; }
+state.subjects.push({id:uid(), name:name, code:code, durationMin:min, maxMarks:marks, chapters:[]});
+await saveSubject(state.subjects[state.subjects.length-1]);
+closeForm(); showToast('Subject added.'); render();
 });
-let addHtml='';
-if(state.addingChapterFor===sub.id){
-addHtml='<div class="addform"><label style="margin-top:0">Chapter name</label><input type="text" id="chapterInput-'+sub.id+'" placeholder="e.g. Module 1 — Introduction" autocomplete="off"><div class="row"><button class="btn" onclick="addChapter(\''+sub.id+'\')">Add chapter</button><button class="btn sec" onclick="state.addingChapterFor=null;render()">Cancel</button></div></div>';
+setTimeout(()=>{ let n=$('fName'); if(n) n.focus(); }, 50);
 }
-let fab=document.createElement('div'); fab.className='fabwrap'; fab.innerHTML='<button class="fab" onclick="showAddChapter(\''+sub.id+'\')" aria-label="Add chapter">+</button>';
-body.innerHTML+=addHtml; body.appendChild(fab);
-div.appendChild(body);
+function openEditSubject(id){
+let sub=findSubject(id); if(!sub) return;
+openForm('Edit Subject',
+'<label>Subject name</label><input type="text" id="fName" value="'+esc(sub.name)+'" autocomplete="off">'
++'<label>Subject code</label><input type="text" id="fCode" value="'+esc(sub.code)+'" autocomplete="off">'
++durationFields('edit-dur', 'editDurDD', sub.durationMin, '')
++'<label>Maximum marks</label><input type="number" id="fMarks" value="'+sub.maxMarks+'" min="1" inputmode="numeric">',
+'Save', async ()=>{
+let name=$('fName').value.trim(); let code=$('fCode').value.trim();
+let marks=parseInt($('fMarks').value,10); let min=readDuration('edit-dur','editDurDD');
+if(!name || !marks || marks<=0 || !min || min<=0){ showToast('Fill in name, maximum marks and duration.'); return; }
+sub.name=name; sub.code=code; sub.maxMarks=marks; sub.durationMin=min;
+await saveSubject(sub); closeForm(); showToast('Subject saved.'); render();
+},
+'<div style="margin-top:16px;text-align:center"><button class="smallbtn danger" onclick="closeForm();deleteSubject(\''+sub.id+'\')">Delete subject</button></div>');
 }
-wrap.appendChild(div);
+function openAddChapter(subjectId){
+let sub=findSubject(subjectId); if(!sub) return;
+openForm('Add Chapter',
+'<label>Chapter name</label><input type="text" id="fChName" placeholder="e.g. Module 1 — Introduction" autocomplete="off">'
++'<label>Difficulty</label>'+ddHTML('addchapter-diff', 'medium', DIFF_OPTS, 'id="addChDiff"', 'dd-btn')
++'<label>Importance</label>'+ddHTML('addchapter-imp', 'important', IMP_OPTS, 'id="addChImp"', 'dd-btn'),
+'Add chapter', async ()=>{
+let name=$('fChName').value.trim();
+if(!name){ showToast('Add a chapter name first.'); $('fChName').focus(); return; }
+let diff=$('addChDiff').dataset.value, imp=$('addChImp').dataset.value;
+sub.chapters.push({id:uid(), name:name, difficulty:diff, importance:imp, topics:[]});
+await saveSubject(sub); closeForm(); showToast('Chapter added.'); render();
 });
-bindDrag();
+setTimeout(()=>{ let n=$('fChName'); if(n) n.focus(); }, 50);
 }
+function openAddTopic(subjectId, chapterId){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+openForm('Add Topic',
+'<label>Topic name</label><input type="text" id="fTopicName" placeholder="Add a topic" autocomplete="off">'
++'<label>Difficulty</label>'+ddHTML('addtopic-diff', 'medium', DIFF_OPTS, 'id="addTopicDiff"', 'dd-btn')
++'<label>Importance</label>'+ddHTML('addtopic-imp', 'important', IMP_OPTS, 'id="addTopicImp"', 'dd-btn'),
+'Add topic', async ()=>{
+let name=$('fTopicName').value.trim();
+if(!name){ showToast('Add a topic name first.'); $('fTopicName').focus(); return; }
+let diff=$('addTopicDiff').dataset.value, imp=$('addTopicImp').dataset.value;
+ch.topics.push({id:uid(), name:name, difficulty:diff, importance:imp});
+await saveSubject(sub); closeForm(); showToast('Topic added.'); render();
+});
+setTimeout(()=>{ let n=$('fTopicName'); if(n) n.focus(); }, 50);
+}
+
+/* Deletes — always with confirmation */
+function deleteSubject(id){
+let sub=findSubject(id); if(!sub) return;
+askDelete('Delete subject?', '"'+sub.name+'" and all its chapters and topics will be removed.', async ()=>{
+state.subjects=state.subjects.filter(s=>s.id!==id);
+await deleteSubjectFromStore(id);
+if(state.subjectId===id) goMain(); else render();
+showToast('Subject deleted.');
+});
+}
+function deleteChapter(subjectId, chapterId){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+askDelete('Delete chapter?', '"'+ch.name+'" and all its topics will be removed.', async ()=>{
+sub.chapters=sub.chapters.filter(c=>c.id!==chapterId);
+await saveSubject(sub);
+if(state.chapterId===chapterId) goSubject(); else render();
+showToast('Chapter deleted.');
+});
+}
+function deleteTopic(subjectId, chapterId, topicId){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+let t=ch.topics.find(x=>x.id===topicId); if(!t) return;
+askDelete('Delete topic?', '"'+t.name+'" will be removed.', async ()=>{
+ch.topics=ch.topics.filter(x=>x.id!==topicId);
+await saveSubject(sub); render(); showToast('Topic deleted.');
+});
+}
+
 loadAll();
 </script>
 </body>
