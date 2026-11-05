@@ -46,6 +46,14 @@ input[type=file]{display:none}
 .tools button{border:1px solid #e2e2e7;background:#fff;color:#1d1d1f;border-radius:10px;padding:11px 18px;font-weight:600;cursor:pointer}
 #modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
 #modal.open{display:flex}
+#durModal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+#durModal.open{display:flex}
+.durfields{display:flex;gap:10px;justify-content:center;margin-top:16px}
+.durfields label{font-size:12px;font-weight:600;color:#86868b;letter-spacing:.04em;text-transform:uppercase}
+.durfields input{display:block;width:96px;padding:14px;font-size:20px;font-weight:700;text-align:center;border:1.5px solid #d2d2d7;border-radius:12px;background:#f5f5f7;color:#1d1d1f;font-family:inherit;margin-top:6px;outline:none}
+.durfields input:focus{border-color:#86868b}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
 .modalbox{background:#fff;border-radius:20px;padding:24px;width:100%;max-width:420px;text-align:center}
 .modalbox h2{font-size:21px}
 #timeup{position:fixed;inset:0;background:rgba(0,0,0,.85);color:#fff;display:none;align-items:center;justify-content:center;z-index:60;padding:24px;text-align:center}
@@ -80,6 +88,8 @@ body.dark .hist .rowline{border-color:#38383a}
 body.dark .pillok{background:#12283d;color:#64a8ff;border-color:#1e3a5c}
 body.dark .pillfail{background:#3a1a1a;color:#ff6961;border-color:#5a2a2a}
 body.dark .btn.danger:disabled{background:#2c2c2e;color:#98989d}
+body.dark .durfields input{background:#2c2c2e;border-color:#38383a;color:#f5f5f7}
+body.dark .durfields input:focus{border-color:#98989d}
 
 .site-footer{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid #d2d2d7;padding:14px 20px;color:#86868b;font-size:13px;text-align:center}
 .site-footer b{color:#1d1d1f}
@@ -107,6 +117,7 @@ body.dark .site-footer b,body.dark .site-footer a{color:#f5f5f7}
 <button class="on" data-min="90">1h 30m</button>
 <button data-min="105">1h 45m</button>
 <button data-min="120">2h</button>
+<button data-min="custom" id="customDurBtn">Custom</button>
 </div>
 <p class="mut" id="durNote" style="margin-top:10px">1h 30m</p>
 </div>
@@ -168,6 +179,17 @@ body.dark .site-footer b,body.dark .site-footer a{color:#f5f5f7}
 <div class="row"><button class="btn sec" onclick="closeModal()">Back</button><button class="btn" id="modalConfirm">Start</button></div>
 </div></div>
 
+<div id="durModal"><div class="modalbox">
+<h2>Custom duration</h2>
+<p class="mut">How long is this exam?</p>
+<div class="durfields">
+<label>Hours<input type="number" id="customHours" inputmode="numeric" min="0" max="12" value="2"></label>
+<label>Minutes<input type="number" id="customMins" inputmode="numeric" min="0" max="59" value="0"></label>
+</div>
+<p class="mut" id="customErr" style="color:#ff3b30;display:none;margin-top:12px"></p>
+<div class="row"><button class="btn sec" onclick="closeCustomDur()">Cancel</button><button class="btn" onclick="applyCustomDur()">Set duration</button></div>
+</div></div>
+
 <div id="timeup"><div>
 <h2>Time’s up.</h2>
 <button class="btn" style="max-width:320px;margin:20px auto 0" onclick="newExam()">New exam</button>
@@ -193,8 +215,8 @@ function toggleTheme(){ applyTheme(document.body.classList.contains('dark')?'lig
 document.querySelectorAll('#themeSeg button').forEach(b=>b.onclick=()=>applyTheme(b.dataset.theme));
 function openDB(){
 return new Promise((resolve,reject)=>{
-let req=indexedDB.open('examTimerDB',2);
-req.onupgradeneeded=()=>{ let db=req.result; if(db.objectStoreNames.contains('papers')) db.deleteObjectStore('papers'); if(!db.objectStoreNames.contains('history')) db.createObjectStore('history',{keyPath:'id',autoIncrement:true}); };
+let req=indexedDB.open('examTimerDB',3);
+req.onupgradeneeded=()=>{ let db=req.result; if(db.objectStoreNames.contains('papers')) db.deleteObjectStore('papers'); if(!db.objectStoreNames.contains('history')) db.createObjectStore('history',{keyPath:'id',autoIncrement:true}); if(!db.objectStoreNames.contains('examPdf')) db.createObjectStore('examPdf',{keyPath:'id'}); };
 req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
 });
 }
@@ -207,6 +229,20 @@ tx.oncomplete=()=>db.close(); tx.onerror=()=>db.close();
 }
 function addHistory(entry){ if(!window.indexedDB) return Promise.resolve(); return dbTx('history','readwrite',s=>s.add(entry)).then(()=>renderHistory()).catch(()=>{}); }
 function escEl(tag,text){ let el=document.createElement(tag); el.textContent=text; return el; }
+function savePdfCache(file){ if(!window.indexedDB) return Promise.resolve(); return dbTx('examPdf','readwrite',s=>s.put({id:'current',name:file.name,size:file.size,type:file.type||'application/pdf',blob:file,savedAt:Date.now()})); }
+function clearCachedPdf(){ if(!window.indexedDB) return Promise.resolve(); return dbTx('examPdf','readwrite',s=>s.delete('current')).catch(()=>{}); }
+async function restorePdf(){
+if(!window.indexedDB) return;
+let rec=await dbTx('examPdf','readonly',s=>s.get('current')).catch(()=>null);
+if(!rec||!rec.blob) return;
+$('pdfName').textContent=rec.name;
+if(!window.pdfjsLib){ $('pdfStatus').textContent='Saved paper needs internet to reopen.'; return; }
+try{
+let buf=await rec.blob.arrayBuffer(); pdfDoc=await pdfjsLib.getDocument({data:buf}).promise;
+$('pdfTools').style.display='flex'; $('pdfEmpty').style.display='none'; $('pdfStatus').textContent=pdfDoc.numPages+' pages · Restored from this browser';
+renderAll();
+}catch(err){ $('pdfStatus').textContent='Saved paper could not be reopened.'; }
+}
 function fmtDate(ts){ return new Date(ts).toLocaleString([], {day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }
 async function renderHistory(){
 let el=$('historyList'); if(!window.indexedDB){ el.innerHTML=''; el.appendChild(escEl('p','History needs this browser.')); return; }
@@ -240,7 +276,7 @@ $('modalConfirm').onclick=()=>{ closeModal(); doResign(outcome); };
 function doResign(outcome){
 clearInterval(interval); finished=true; let elapsed=Date.now()-startTime;
 addHistory({outcome:outcome,durationMin:durationMin,elapsedMs:elapsed,endedAt:Date.now(),resigned:true});
-localStorage.removeItem(KEY); endTime=null;
+localStorage.removeItem(KEY); endTime=null; clearCachedPdf();
 $('resultTitle').textContent=outcome==='FAILED'?'Failed.':'Completed.';
 $('resultTitle').style.color=outcome==='FAILED'?'#ff6961':'#fff';
 $('resultText').textContent=outcome==='FAILED'?('Resigned at '+fmt(Math.floor(elapsed/1000))+' elapsed, before 5 minutes before half-time.'):'Resigned at '+fmt(Math.floor(elapsed/1000))+' elapsed, at or after 5 minutes before half-time.';
@@ -252,7 +288,32 @@ let endTime=null, totalMs=0, interval=null, finished=false;
 function $(id){return document.getElementById(id);}
 function fmt(s){let h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60; return h+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0');}
 function fmtClock(s){let h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60; return h>0?String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'):String(m).padStart(2,'0')+':'+String(x).padStart(2,'0');}
-document.querySelectorAll('#durSeg button').forEach(b=>b.onclick=()=>{ if(endTime) return; document.querySelectorAll('#durSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); durationMin=parseInt(b.dataset.min,10); $('durNote').textContent=b.textContent; });
+function fmtDurLabel(min){ let h=Math.floor(min/60),m=min%60; return h?h+'h'+(m?' '+m+'m':''):m+'m'; }
+let customMin=0;
+try{ customMin=parseInt(localStorage.getItem('examTimerCustomMin')||'0',10)||0; }catch(e){}
+if(customMin) $('customDurBtn').textContent='Custom · '+fmtDurLabel(customMin);
+function selectDuration(b){
+document.querySelectorAll('#durSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+durationMin=b.dataset.min==='custom'?customMin:parseInt(b.dataset.min,10);
+$('durNote').textContent=b.textContent;
+}
+document.querySelectorAll('#durSeg button').forEach(b=>b.onclick=()=>{ if(endTime) return; if(b.dataset.min==='custom'){ openCustomDur(); return; } selectDuration(b); });
+function openCustomDur(){
+if(endTime) return;
+let cur=customMin||120; $('customHours').value=Math.floor(cur/60); $('customMins').value=cur%60;
+$('customErr').style.display='none'; $('durModal').classList.add('open');
+}
+function closeCustomDur(){ $('durModal').classList.remove('open'); }
+function applyCustomDur(){
+let h=parseInt($('customHours').value,10),m=parseInt($('customMins').value,10);
+if(isNaN(h))h=0; if(isNaN(m))m=0;
+let total=h*60+m,err=$('customErr');
+if(total<1){ err.textContent='Set at least 1 minute.'; err.style.display='block'; return; }
+if(total>720){ err.textContent='Custom exams are up to 12 hours.'; err.style.display='block'; return; }
+customMin=total; try{ localStorage.setItem('examTimerCustomMin',String(total)); }catch(e){}
+$('customDurBtn').textContent='Custom · '+fmtDurLabel(total);
+selectDuration($('customDurBtn')); closeCustomDur();
+}
 function askStart(){ $('modalTitle').textContent='Start?'; $('modalConfirm').textContent='Start'; $('modalText').textContent=document.querySelector('#durSeg button.on').textContent+'. No pause. No stop.'; $('modal').classList.add('open'); $('modalConfirm').onclick=()=>{ closeModal(); startTimer(); }; }
 function closeModal(){ $('modal').classList.remove('open'); }
 function startTimer(){
@@ -277,14 +338,14 @@ resignState();
 if(remain<=0){ finishTimer(); }
 }
 function finishTimer(){
-if(finished) return; finished=true; clearInterval(interval); addHistory({outcome:'TIME UP',durationMin:durationMin,elapsedMs:totalMs,endedAt:Date.now(),resigned:false});
+if(finished) return; finished=true; clearInterval(interval); clearCachedPdf(); addHistory({outcome:'TIME UP',durationMin:durationMin,elapsedMs:totalMs,endedAt:Date.now(),resigned:false});
 $('clock').textContent='0:00:00'; $('timerLabel').textContent='Finished';
 try{ let ctx=new (window.AudioContext||window.webkitAudioContext)(); [523,659,784].forEach((f,i)=>{let o=ctx.createOscillator(),g=ctx.createGain(); o.frequency.value=f; o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(.12,ctx.currentTime+i*.25); g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+i*.25+.5); o.start(ctx.currentTime+i*.25); o.stop(ctx.currentTime+i*.25+.55);}); }catch(e){}
 if(navigator.vibrate) navigator.vibrate([300,150,300,150,300]);
 $('timeup').classList.add('open');
 }
 function newExam(){
-localStorage.removeItem(KEY); endTime=null; finished=false; $('timeup').classList.remove('open'); $('resultOverlay').style.display='none'; renderHistory(); $('timerCard').style.display='none'; $('setupCard').style.display='block'; document.querySelectorAll('#durSeg button').forEach(b=>b.disabled=false);
+localStorage.removeItem(KEY); endTime=null; finished=false; clearCachedPdf(); $('timeup').classList.remove('open'); $('resultOverlay').style.display='none'; renderHistory(); $('timerCard').style.display='none'; $('setupCard').style.display='block'; document.querySelectorAll('#durSeg button').forEach(b=>b.disabled=false);
 $('clock').textContent=fmtClock(durationMin*60); $('timerLabel').textContent='Time remaining'; $('timerBar').classList.remove('warn'); $('prog').style.width='0%';
 }
 function zoomIn(){ zoom=Math.min(2.2, zoom+0.2); renderAll(); }
@@ -297,6 +358,7 @@ try{
 let buf=await file.arrayBuffer(); pdfDoc=await pdfjsLib.getDocument({data:buf}).promise;
 $('pdfTools').style.display='flex'; $('pdfEmpty').style.display='none'; $('pdfStatus').textContent=pdfDoc.numPages+' pages';
 renderAll();
+savePdfCache(file).then(()=>{ $('pdfStatus').textContent=pdfDoc.numPages+' pages · Saved in this browser'; }).catch(()=>{});
 }catch(err){ $('pdfStatus').textContent='Could not open that PDF.'; }
 });
 async function renderAll(){
@@ -312,11 +374,12 @@ window.addEventListener('beforeunload', e=>{ if(endTime && Date.now()<endTime &&
 (function(){
 try{
 let saved=JSON.parse(localStorage.getItem(KEY)||'null'); if(!saved) { $('clock').textContent=fmtClock(durationMin*60); }
-else if(saved.endTime>Date.now()){ durationMin=saved.durationMin; totalMs=durationMin*60*1000; endTime=saved.endTime; startTime=endTime-totalMs; document.querySelectorAll('#durSeg button').forEach(b=>{ b.classList.toggle('on', parseInt(b.dataset.min,10)===durationMin); }); showRunning(); tick(); interval=setInterval(tick,500); }
+else if(saved.endTime>Date.now()){ durationMin=saved.durationMin; totalMs=durationMin*60*1000; endTime=saved.endTime; startTime=endTime-totalMs; document.querySelectorAll('#durSeg button').forEach(b=>{ b.classList.toggle('on', b.dataset.min==='custom'?durationMin===customMin:parseInt(b.dataset.min,10)===durationMin); }); let onBtn=document.querySelector('#durSeg button.on'); if(onBtn) $('durNote').textContent=onBtn.textContent; showRunning(); tick(); interval=setInterval(tick,500); }
 else { localStorage.removeItem(KEY); }
 }catch(e){}
 try{ applyTheme(localStorage.getItem('examTimerTheme')||'light'); }catch(e){ applyTheme('light'); }
 renderHistory();
+restorePdf();
 })();
 </script>
 </body>
