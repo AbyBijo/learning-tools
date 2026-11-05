@@ -129,6 +129,15 @@ html,body{background:#fff}
 .print-topic .pmeta{font-size:12px;color:#6e6e73;font-weight:600}
 .print-topic .pnote{font-size:14px;line-height:1.65;white-space:pre-wrap;margin-top:8px}
 
+
+/* Explore more tools + personal footer — home page only */
+.explore{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:20px;padding:18px 22px;margin-top:14px;box-shadow:0 1px 2px rgba(0,0,0,.05);color:#1d1d1f;text-decoration:none;font-weight:700;font-size:16px}
+.explore span:last-child{color:#0071e3}
+.site-footer{margin-top:28px;padding-top:18px;border-top:1px solid #d2d2d7;color:#86868b;font-size:13px;text-align:center}
+.site-footer b{color:#1d1d1f}
+.site-footer a{color:#1d1d1f;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px;margin-left:12px}
+.site-footer a svg{width:15px;height:15px}
+
 </style>
 </head>
 <body>
@@ -182,6 +191,50 @@ function openDB(){ return new Promise(res=>{ try{ let req=indexedDB.open(DB_NAME
 function idbAll(){ return new Promise(res=>{ let tx=db.transaction(STORE,'readonly'); let req=tx.objectStore(STORE).getAll(); req.onsuccess=()=>res(req.result||[]); req.onerror=()=>res([]); }); }
 function idbPut(sub){ return new Promise(res=>{ let tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(sub); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }); }
 function idbDel(id){ return new Promise(res=>{ let tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).delete(id); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }); }
+
+/* Reload / orientation resistant — the current place is saved (one tiny entry,
+   overwritten on every navigation, never growing) and restored after the data loads.
+   The place also lives in the page address, so the back button works. */
+const PLACE_KEY='compartmentalizerLastPlaceV1';
+let formTopicId=null;
+function hashFor(v){
+if(v.view==='chapter' && v.subjectId && v.chapterId) return '#/subject/'+encodeURIComponent(v.subjectId)+'/chapter/'+encodeURIComponent(v.chapterId);
+if(v.view==='subject' && v.subjectId) return '#/subject/'+encodeURIComponent(v.subjectId);
+return '#/';
+}
+function savePlace(){
+let place={view:state.view, subjectId:state.subjectId, chapterId:state.chapterId, topicId:formTopicId};
+try{ localStorage.setItem(PLACE_KEY, JSON.stringify(place)); }catch(e){}
+try{ history.replaceState(null, '', hashFor(place)); }catch(e){}
+}
+function parseHash(){
+let m=location.hash.match(/^#\/subject\/([^\/]+)(?:\/chapter\/([^\/]+))?$/);
+if(!m) return null;
+return {view: m[2] ? 'chapter' : 'subject', subjectId: decodeURIComponent(m[1]), chapterId: m[2] ? decodeURIComponent(m[2]) : null};
+}
+function restorePlace(){
+let p=parseHash();
+if(!p){ try{ p=JSON.parse(localStorage.getItem(PLACE_KEY)||'null'); }catch(e){ p=null; } }
+if(!p || !p.subjectId) return null;
+let sub=findSubject(p.subjectId); if(!sub) return null;
+if(p.view==='chapter' && p.chapterId){
+let ch=findChapter(sub, p.chapterId); if(!ch) return null;
+state.view='chapter'; state.subjectId=sub.id; state.chapterId=ch.id;
+let topicId=null;
+if(p.topicId){ let t=ch.topics.find(x=>x.id===p.topicId); if(t) topicId=t.id; }
+return topicId;
+}
+state.view='subject'; state.subjectId=sub.id; state.chapterId=null;
+return null;
+}
+window.addEventListener('hashchange', ()=>{
+if(location.hash==='#/' || location.hash===''){ formTopicId=null; state.view='main'; state.subjectId=null; state.chapterId=null; render(); return; }
+let p=parseHash(); if(!p) return;
+let sub=findSubject(p.subjectId); if(!sub) return;
+if(p.view==='chapter' && p.chapterId && !findChapter(sub, p.chapterId)) return;
+formTopicId=null; state.view=p.view; state.subjectId=p.subjectId; state.chapterId=p.chapterId; render();
+});
+
 async function loadAll(){
 await openDB();
 if(idbReady){ state.subjects=await idbAll(); }
@@ -196,7 +249,9 @@ ch.topics=(ch.topics||[]).map(t=>({difficulty:'medium', importance:'important', 
 });
 });
 if(migrated && idbReady){ for(let sub of state.subjects) await idbPut(sub); }
+let reopenTopic=restorePlace();
 render();
+if(reopenTopic) openTopicPopup(null, state.subjectId, state.chapterId, reopenTopic);
 }
 async function saveSubject(sub){
 if(idbReady){ await idbPut(sub); }
@@ -258,7 +313,7 @@ $('formTitle').textContent=title; $('formBody').innerHTML=bodyHTML;
 $('formPrimary').textContent=primaryLabel; $('formExtra').innerHTML=extraHTML||'';
 formSubmit=onSubmit; $('formModal').classList.add('open');
 }
-function closeForm(){ $('formModal').classList.remove('open'); formSubmit=null; }
+function closeForm(){ $('formModal').classList.remove('open'); formSubmit=null; formTopicId=null; savePlace(); }
 $('formModal').addEventListener('click', e=>{ if(e.target===$('formModal')) closeForm(); });
 $('modal').addEventListener('click', e=>{ if(e.target===$('modal')) closeModal(); });
 function submitForm(){ if(formSubmit) formSubmit(); }
@@ -280,6 +335,7 @@ else if(state.view==='chapter') openAddTopic(state.subjectId, state.chapterId);
 
 /* Render */
 function render(){
+savePlace();
 $('viewMain').style.display = state.view==='main' ? 'block':'none';
 $('viewSubject').style.display = state.view==='subject' ? 'block':'none';
 $('viewChapter').style.display = state.view==='chapter' ? 'block':'none';
@@ -298,6 +354,8 @@ let totalTopics=sub.chapters.reduce((n,c)=>n+c.topics.length,0);
 html+='<div class="subj-tile" onclick="openSubject(\''+sub.id+'\')"><div><h3>'+esc(sub.name)+'</h3>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')+'<div class="meta">'+sub.chapters.length+' chapter'+(sub.chapters.length===1?'':'s')+' · '+totalTopics+' topic'+(totalTopics===1?'':'s')+'</div></div><span class="chev">›</span></div>';
 });
 }
+html+='<a class="explore" href="https://abybijo.github.io/learning-tools/"><span>Explore more tools</span><span>→</span></a>'
++'<footer class="site-footer"><b>Aby Bijo</b><a href="https://github.com/AbyBijo"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.15c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.11-.74.4-1.25.72-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 1.67.41.35.77 1.05.77 2.12v3.15c0 .3.21.67.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>GitHub</a><a href="https://www.linkedin.com/in/aby-bijo-102359282"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>LinkedIn</a></footer>';
 w.innerHTML=html;
 }
 function renderSubject(){
@@ -481,6 +539,7 @@ if(e && e.target.closest('.handle')) return;
 if(dragJustEnded) return;
 let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
 let t=ch.topics.find(x=>x.id===topicId); if(!t) return;
+formTopicId=t.id; savePlace();
 openForm(t.name,
 '<div class="chapter-meta" style="justify-content:center;margin-top:0"><span class="pill diff-'+t.difficulty+'">'+diffLabel(t.difficulty)+'</span><span class="pill imp-'+t.importance+'">'+impLabel(t.importance)+'</span></div>'
 +'<label>Note</label>'
