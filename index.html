@@ -4,13 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f5f7">
+<meta name="color-scheme" content="light">
 <title>Learning Tools</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{color-scheme:light}
 body{margin:0;background:#f5f5f7;color:#1d1d1f;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
-.wrap{max-width:860px;margin:0 auto;padding:28px 20px 64px}
+.wrap{max-width:960px;margin:0 auto;padding:28px 20px 64px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:16px}
 .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:17px;letter-spacing:-.01em}
 .mark{width:36px;height:36px;border-radius:11px;background:#1d1d1f;color:#fff;display:grid;place-items:center;flex:none}
@@ -25,18 +27,20 @@ h1{font-size:clamp(40px,7vw,64px);line-height:1.02;letter-spacing:-.035em;margin
 .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:16px}
 .section-head h2{font-size:22px;letter-spacing:-.02em;margin:0;font-weight:700}
 .section-head span{color:#86868b;font-size:13px}
-.grid{display:grid;grid-template-columns:1fr;gap:14px}
-@media(min-width:640px){.grid{grid-template-columns:1fr 1fr}}
-.card{background:#fff;border:1px solid #e8e8ed;border-radius:24px;padding:24px;display:flex;gap:16px;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .2s ease,box-shadow .2s ease}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;grid-auto-rows:1fr;align-items:stretch}
+.card{background:#fff;border:1px solid #e8e8ed;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:14px;height:100%;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .2s ease,box-shadow .2s ease}
 .card:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.08)}
-.card.featured{grid-column:1/-1}
+.card-top{display:flex;align-items:center;gap:14px}
+.card-top h3{margin:0}
+.card p{flex:1}
+.open-row{display:flex;justify-content:flex-end;margin-top:auto}
 .icon{width:52px;height:52px;border-radius:16px;background:#f5f5f7;border:1px solid #e8e8ed;display:grid;place-items:center;flex:none;color:#0071e3}
 .icon svg{width:26px;height:26px}
-.card h3{font-size:19px;letter-spacing:-.01em;margin:0 0 6px;font-weight:700}
+.card h3{font-size:19px;letter-spacing:-.01em;font-weight:700}
 .card p{color:#6e6e73;font-size:15px;line-height:1.55;margin:0}
 .meta{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
 .pill{font-size:12px;font-weight:600;color:#424245;background:#f5f5f7;border:1px solid #e8e8ed;border-radius:999px;padding:5px 10px}
-.open{margin-left:auto;align-self:center;flex:none;color:#0071e3;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.open{flex:none;color:#0071e3;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px}
 .open svg{width:16px;height:16px}
 .note{background:#fff;border:1px solid #e8e8ed;border-radius:24px;padding:24px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .note h3{margin:0 0 8px;font-size:17px}
@@ -70,27 +74,27 @@ footer{margin-top:48px;padding-top:24px;border-top:1px solid #d2d2d7;display:fle
   <section class="section">
     <div class="section-head"><h2>All tools</h2><span id="tool-count">2 tools</span></div>
     <div class="grid" id="tool-grid">
-      <a class="card featured" href="tools/exam-timer.html">
-        <span class="icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>
-        </span>
-        <span style="flex:1;min-width:0">
+      <a class="card" href="tools/exam-timer.html">
+        <span class="card-top">
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>
+          </span>
           <h3>Exam Timer</h3>
-          <p>General exam timer with a PDF paper beside the clock. Choose a duration, load any paper, start — then no pause, no stop.</p>
-          <span class="meta"><span class="pill">1h 30m</span><span class="pill">1h 45m</span><span class="pill">2h</span><span class="pill">Load any PDF</span></span>
         </span>
-        <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+        <p>General exam timer with a PDF paper beside the clock. Choose a duration, load any paper, start — then no pause, no stop.</p>
+        <span class="meta"><span class="pill">1h 30m</span><span class="pill">1h 45m</span><span class="pill">2h</span><span class="pill">Load any PDF</span></span>
+        <span class="open-row"><span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span></span>
       </a>
       <a class="card" href="tools/compartmentalizer.html">
-        <span class="icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18"/></svg>
-        </span>
-        <span style="flex:1;min-width:0">
+        <span class="card-top">
+          <span class="icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18"/></svg>
+          </span>
           <h3>Compartmentalizer</h3>
-          <p>Organise subjects into chapters and topics. Add exam time and max marks, drag topics to reorder, and keep everything saved in this browser.</p>
-          <span class="meta"><span class="pill">Subjects</span><span class="pill">Chapters</span><span class="pill">Topics</span><span class="pill">Drag to reorder</span></span>
         </span>
-        <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>
+        <p>Organise subjects into chapters and topics. Add exam time and max marks, drag topics to reorder, and keep everything saved in this browser.</p>
+        <span class="meta"><span class="pill">Subjects</span><span class="pill">Chapters</span><span class="pill">Topics</span><span class="pill">Drag to reorder</span></span>
+        <span class="open-row"><span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span></span>
       </a>
     </div>
     <p class="muted" id="auto-note" style="margin-top:14px">New tools added to the <code>tools/</code> folder appear in this list automatically.</p>
@@ -138,10 +142,10 @@ footer{margin-top:48px;padding-top:24px;border-top:1px solid #d2d2d7;display:fle
           var a = document.createElement('a');
           a.className = 'card';
           a.href = 'tools/' + encodeURIComponent(it.name);
-          a.innerHTML = '<span class="icon" aria-hidden="true">' + iconFor(it.name.toLowerCase()) + '</span>' +
-            '<span style="flex:1;min-width:0"><h3>' + titleFromFile(it.name) + '</h3>' +
-            '<p>Open this tool.</p></span>' +
-            '<span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span>';
+          a.innerHTML = '<span class="card-top"><span class="icon" aria-hidden="true">' + iconFor(it.name.toLowerCase()) + '</span>' +
+            '<h3>' + titleFromFile(it.name) + '</h3></span>' +
+            '<p>Open this tool.</p>' +
+            '<span class="open-row"><span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span></span>';
           grid.appendChild(a);
           added++;
         });
