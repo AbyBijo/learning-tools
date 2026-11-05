@@ -2,23 +2,35 @@
 
 ![Learning Tools](learning-tools-banner.jpg)
 
-This repository contains various tools for exam preparation.
+> **Learn smarter.**
 
-Each tool is a single-page HTML file you can open in a browser — no install, no account needed for the tools themselves.
+Learning Tools is a growing collection of exam preparation tools, built to be the best of their kind — fast, focused, and free to use. One place for every tool an exam needs, with nothing in the way.
 
-## Live site
+**Use it now: https://abybijo.github.io/learning-tools/**
 
-GitHub Pages: https://abybijo.github.io/learning-tools/
+## Why Learning Tools
 
-Source repository: https://github.com/AbyBijo/learning-tools
+- **No install, no account.** Every tool is a single page you open in a browser — on your phone or your computer — and start using straight away.
+- **Your data stays yours.** Everything you save is stored in your own browser. Nothing is uploaded, and nothing leaves your device.
+- **One job, done properly.** Each tool does a single thing and does it well, instead of doing many things badly.
+- **Built for real exams.** Real exam rules, real exam pressure — timers that cannot be paused, papers beside the clock, and study plans that survive a reload.
 
-## Tools
+## The tools
 
-- **Exam Timer** — `tools/exam-timer.html`
-  General exam timer with a PDF paper beside the clock. Durations: 1h 30m, 1h 45m, 2h. Once started there is no pause, no stop, and closing the page does not stop it — reopening resumes the timer. Load any PDF paper to read the questions while the time stays visible at the top.
+| Tool | What it does |
+| --- | --- |
+| [**Exam Timer**](https://abybijo.github.io/learning-tools/tools/exam-timer.html) | A strict, general exam timer with your paper beside the clock. Durations: 1h 30m, 1h 45m, 2h. Once started there is no pause and no stop — closing the page does not stop it; reopening resumes the timer. Load any PDF paper and read the questions while the time stays visible at the top. |
+| [**Compartmentalizer**](https://abybijo.github.io/learning-tools/tools/compartmentalizer.html) | Organise subjects into chapters and topics. Add exam time and maximum marks, drag topics to reorder them, add notes to topics, and save a chapter — or a whole subject — as a PDF. The page you are on survives a reload. |
 
-- **Compartmentalizer** — `tools/compartmentalizer.html`
-  Organise subjects into chapters and topics. Add exam time and max marks, drag topics to reorder, add notes to topics, and save a chapter or a whole subject as a PDF. Everything is saved in the browser, and the page you are on survives a reload.
+## Coming soon
+
+**More tools and utilities are coming soon.** New tools are added here as they are built — check back for the next one.
+
+## How to use
+
+1. Open https://abybijo.github.io/learning-tools/
+2. Pick a tool.
+3. Start working — nothing to install, nothing to sign up for.
 
 ## How the index works
 
@@ -58,5 +70,11 @@ tools/
   compartmentalizer.html
                         Compartmentalizer — subjects, chapters, topics
 footer-snippet.html     Footer snippet for new tools' home pages (copy-paste)
+learning-tools-banner.jpg
+                        Banner image — head image of this README
 README.md               This file
 ```
+
+## Built by
+
+**Aby Bijo** — [GitHub](https://github.com/AbyBijo) · [LinkedIn](https://www.linkedin.com/in/aby-bijo-102359282)
