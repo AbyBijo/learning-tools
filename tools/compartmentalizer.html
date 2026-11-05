@@ -436,12 +436,13 @@ let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapter
 openForm('Add Topic',
 '<label>Topic name</label><input type="text" id="fTopicName" placeholder="Add a topic" autocomplete="off">'
 +'<label>Difficulty</label>'+ddHTML('addtopic-diff', 'medium', DIFF_OPTS, 'id="addTopicDiff"', 'dd-btn')
-+'<label>Importance</label>'+ddHTML('addtopic-imp', 'important', IMP_OPTS, 'id="addTopicImp"', 'dd-btn'),
++'<label>Importance</label>'+ddHTML('addtopic-imp', 'important', IMP_OPTS, 'id="addTopicImp"', 'dd-btn')
++'<label>Note</label><textarea id="fTopicNote" placeholder="Add a note for this topic (optional)"></textarea>',
 'Add topic', async ()=>{
 let name=$('fTopicName').value.trim();
 if(!name){ showToast('Add a topic name first.'); $('fTopicName').focus(); return; }
 let diff=$('addTopicDiff').dataset.value, imp=$('addTopicImp').dataset.value;
-ch.topics.push({id:uid(), name:name, difficulty:diff, importance:imp, note:''});
+ch.topics.push({id:uid(), name:name, difficulty:diff, importance:imp, note:$('fTopicNote').value});
 await saveSubject(sub); closeForm(); showToast('Topic added.'); render();
 });
 setTimeout(()=>{ let n=$('fTopicName'); if(n) n.focus(); }, 50);
