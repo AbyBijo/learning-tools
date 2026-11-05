@@ -1,5 +1,7 @@
 # Learning Tools
 
+![Learning Tools](learning-tools-banner.jpg)
+
 This repository contains various tools for exam preparation.
 
 Each tool is a single-page HTML file you can open in a browser — no install, no account needed for the tools themselves.
