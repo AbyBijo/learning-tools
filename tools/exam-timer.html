@@ -42,8 +42,6 @@ input[type=file]{display:none}
 .pdfpage{background:#fff;border-radius:14px;padding:12px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .pdfpage canvas{width:100%;height:auto;display:block}
 .pagelabel{font-size:12px;color:#86868b;font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between}
-.tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
-.tools button{border:1px solid #e2e2e7;background:#fff;color:#1d1d1f;border-radius:10px;padding:11px 18px;font-weight:600;cursor:pointer}
 #modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
 #modal.open{display:flex}
 #durModal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
@@ -126,11 +124,6 @@ body.dark .site-footer b,body.dark .site-footer a{color:#f5f5f7}
 <h2>Paper</h2>
 <label class="drop" for="pdfFile"><b>Load PDF</b><span id="pdfName">No paper yet</span></label>
 <input type="file" id="pdfFile" accept="application/pdf">
-<div class="tools" id="pdfTools" style="display:none">
-<button onclick="zoomOut()">−</button>
-<button onclick="zoomIn()">+</button>
-<button onclick="scrollToTop()">Top</button>
-</div>
 <p class="mut" id="pdfStatus"></p>
 </div>
 
@@ -239,7 +232,7 @@ $('pdfName').textContent=rec.name;
 if(!window.pdfjsLib){ $('pdfStatus').textContent='Saved paper needs internet to reopen.'; return; }
 try{
 let buf=await rec.blob.arrayBuffer(); pdfDoc=await pdfjsLib.getDocument({data:buf}).promise;
-$('pdfTools').style.display='flex'; $('pdfEmpty').style.display='none'; $('pdfStatus').textContent=pdfDoc.numPages+' pages · Restored from this browser';
+$('pdfEmpty').style.display='none'; $('pdfStatus').textContent=pdfDoc.numPages+' pages · Restored from this browser';
 renderAll();
 }catch(err){ $('pdfStatus').textContent='Saved paper could not be reopened.'; }
 }
@@ -283,7 +276,7 @@ $('resultText').textContent=outcome==='FAILED'?('Resigned at '+fmt(Math.floor(el
 $('resultOverlay').style.display='flex';
 }
 
-let durationMin=90, pdfDoc=null, zoom=1.0;
+let durationMin=90, pdfDoc=null;
 let endTime=null, totalMs=0, interval=null, finished=false;
 function $(id){return document.getElementById(id);}
 function fmt(s){let h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60; return h+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0');}
@@ -348,15 +341,12 @@ function newExam(){
 localStorage.removeItem(KEY); endTime=null; finished=false; clearCachedPdf(); $('timeup').classList.remove('open'); $('resultOverlay').style.display='none'; renderHistory(); $('timerCard').style.display='none'; $('setupCard').style.display='block'; document.querySelectorAll('#durSeg button').forEach(b=>b.disabled=false);
 $('clock').textContent=fmtClock(durationMin*60); $('timerLabel').textContent='Time remaining'; $('timerBar').classList.remove('warn'); $('prog').style.width='0%';
 }
-function zoomIn(){ zoom=Math.min(2.2, zoom+0.2); renderAll(); }
-function zoomOut(){ zoom=Math.max(0.7, zoom-0.2); renderAll(); }
-function scrollToTop(){ window.scrollTo({top:0,behavior:'smooth'}); }
 $('pdfFile').addEventListener('change', async (e)=>{
 let file=e.target.files[0]; if(!file) return; $('pdfName').textContent=file.name;
 if(!window.pdfjsLib){ $('pdfStatus').textContent='PDF viewer needs internet on first load.'; return; }
 try{
 let buf=await file.arrayBuffer(); pdfDoc=await pdfjsLib.getDocument({data:buf}).promise;
-$('pdfTools').style.display='flex'; $('pdfEmpty').style.display='none'; $('pdfStatus').textContent=pdfDoc.numPages+' pages';
+$('pdfEmpty').style.display='none'; $('pdfStatus').textContent=pdfDoc.numPages+' pages';
 renderAll();
 savePdfCache(file).then(()=>{ $('pdfStatus').textContent=pdfDoc.numPages+' pages · Saved in this browser'; }).catch(()=>{});
 }catch(err){ $('pdfStatus').textContent='Could not open that PDF.'; }
@@ -364,7 +354,7 @@ savePdfCache(file).then(()=>{ $('pdfStatus').textContent=pdfDoc.numPages+' pages
 async function renderAll(){
 if(!pdfDoc) return; let wrap=$('pdfWrap'); wrap.innerHTML='';
 for(let i=1;i<=pdfDoc.numPages;i++){
-let page=await pdfDoc.getPage(i); let containerW=wrap.clientWidth||800; let base=page.getViewport({scale:1}); let scale=(containerW-24)/base.width*zoom; let vp=page.getViewport({scale:scale});
+let page=await pdfDoc.getPage(i); let containerW=wrap.clientWidth||800; let base=page.getViewport({scale:1}); let scale=(containerW-24)/base.width*2; // always top quality let vp=page.getViewport({scale:scale});
 let div=document.createElement('div'); div.className='pdfpage'; div.innerHTML='<div class="pagelabel"><span>Page '+i+'</span><span>'+i+' of '+pdfDoc.numPages+'</span></div>';
 let canvas=document.createElement('canvas'); canvas.width=vp.width; canvas.height=vp.height; div.appendChild(canvas); wrap.appendChild(div);
 await page.render({canvasContext:canvas.getContext('2d'), viewport:vp}).promise;
