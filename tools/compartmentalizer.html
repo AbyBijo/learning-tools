@@ -109,6 +109,26 @@ textarea{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;bo
 /* Custom toast — no native alert anywhere */
 #toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:28px;background:#1d1d1f;color:#fff;padding:13px 20px;border-radius:999px;font-weight:600;font-size:14px;z-index:80;box-shadow:0 12px 32px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;max-width:92vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Save as PDF — print only. Flowing pages, topics kept whole, footer repeats on every page. */
+#printArea{display:none}
+#printFooter{display:none}
+@media print{
+@page{size:A4;margin:18mm 16mm 22mm 16mm}
+html,body{background:#fff}
+.wrap,.fab,#toast,.modal{display:none!important}
+#printArea{display:block!important;text-align:left;color:#1d1d1f}
+#printFooter{display:flex!important;position:fixed;bottom:0;left:0;right:0;justify-content:space-between;align-items:center;font-size:11px;color:#6e6e73;border-top:1px solid #d2d2d7;padding-top:8px;background:#fff}
+#printFooter a{color:#1d1d1f;text-decoration:none;font-weight:600}
+#printFooter svg{width:16px;height:16px}
+}
+.print-chapter h1{font-size:26px;text-align:center;margin:0 0 6px}
+.print-chapter .pline{text-align:center;color:#6e6e73;font-size:14px;margin:3px 0}
+.print-topic{break-inside:avoid;page-break-inside:avoid;margin-top:18px}
+.print-topic h3{font-size:16px;margin:0 0 4px}
+.print-topic .pmeta{font-size:12px;color:#6e6e73;font-weight:600}
+.print-topic .pnote{font-size:14px;line-height:1.65;white-space:pre-wrap;margin-top:8px}
+
 </style>
 </head>
 <body>
@@ -124,6 +144,9 @@ textarea{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;bo
 <div id="viewSubject" style="display:none"></div>
 <div id="viewChapter" style="display:none"></div>
 </div>
+
+<div id="printArea"></div>
+<div id="printFooter"><span>Made with <a href="https://abybijo.github.io/learning-tools/tools/compartmentalizer.html">Compartmentalizer</a></span><a href="https://github.com/AbyBijo/learning-tools/blob/main/tools/compartmentalizer.html" aria-label="Compartmentalizer on GitHub"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.15c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.11-.74.4-1.25.72-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 1.67.41.35.77 1.05.77 2.12v3.15c0 .3.21.67.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg></a></div>
 
 <button class="fab" id="fab" onclick="fabAction()" aria-label="Add">+</button>
 
@@ -315,7 +338,8 @@ html+='<div class="card" style="text-align:center"><p class="empty" style="margi
 } else {
 html+='<div data-chapter-list="'+ch.id+'">'+ch.topics.map(t=>topicRowHTML(sub,ch,t)).join('')+'</div>';
 }
-html+='<div style="margin-top:22px;text-align:center"><button class="smallbtn danger" onclick="deleteChapter(\''+sub.id+'\',\''+ch.id+'\')">Delete chapter</button></div>';
+html+='<div style="margin-top:22px"><button class="btn" onclick="saveChapterPDF(\''+sub.id+'\',\''+ch.id+'\')">Save as PDF</button></div>'
++'<div style="margin-top:16px;text-align:center"><button class="smallbtn danger" onclick="deleteChapter(\''+sub.id+'\',\''+ch.id+'\')">Delete chapter</button></div>';
 $('viewChapter').innerHTML=html;
 bindDrag();
 }
@@ -518,6 +542,26 @@ askDelete('Delete topic?', '"'+t.name+'" will be removed.', async ()=>{
 ch.topics=ch.topics.filter(x=>x.id!==topicId);
 await saveSubject(sub); render(); showToast('Topic deleted.');
 });
+}
+
+
+/* Save a chapter as PDF — via the print sheet, so pages flow and nothing is cut */
+function saveChapterPDF(subjectId, chapterId){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+let html='<div class="print-chapter"><h1>'+esc(ch.name)+'</h1>'
++'<p class="pline">'+esc(sub.name)+'</p>'
++'<p class="pline">'+esc(sub.code)+'</p>'
++'<p class="pline">Difficulty: '+diffLabel(ch.difficulty)+'</p>'
++'<p class="pline">Importance: '+impLabel(ch.importance)+'</p>';
+ch.topics.forEach((t,i)=>{
+html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(t.name)+'</h3>'
++'<div class="pmeta">Difficulty: '+diffLabel(t.difficulty)+' · Importance: '+impLabel(t.importance)+'</div>'
++(t.note ? '<div class="pnote">'+esc(t.note)+'</div>' : '<div class="pmeta" style="margin-top:6px">No notes.</div>')
++'</div>';
+});
+html+='</div>';
+$('printArea').innerHTML=html;
+window.print();
 }
 
 loadAll();
