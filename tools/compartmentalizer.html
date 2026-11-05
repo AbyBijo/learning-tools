@@ -70,13 +70,45 @@ textarea{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;bo
 .section-label{font-size:12px;font-weight:600;color:#86868b;letter-spacing:.06em;text-transform:uppercase;text-align:left;margin:26px 0 0}
 /* Topics */
 .topic{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #e2e2e7;border-radius:14px;padding:9px 10px;margin-top:8px;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}
-.topic.dragging{opacity:.92;box-shadow:0 12px 28px rgba(0,0,0,.18);z-index:5;position:relative}
+.topic.dragging{opacity:.92;box-shadow:0 12px 28px rgba(0,0,0,.18);z-index:5;position:relative;transition:none}
 .topic.drop-before{border-top:2px solid #1d1d1f}
 .topic.drop-after{border-bottom:2px solid #1d1d1f}
 .handle{touch-action:none;cursor:grab;color:#a1a1a6;font-size:18px;padding:6px 4px;flex-shrink:0;user-select:none;-webkit-user-select:none}
 .handle:active{cursor:grabbing}
 .topic .name{font-size:15px;font-weight:600;text-align:left;line-height:1.4}
 .del{border:0;background:transparent;color:#c81e1e;font-size:18px;cursor:pointer;padding:6px;flex-shrink:0}
+/* Chapter tabs — Topics / Questions capsule */
+.tabs{display:flex;gap:3px;background:#e8e8ed;border-radius:12px;padding:3px;margin-top:20px}
+.tab{flex:1;border:0;background:transparent;color:#6e6e73;padding:10px 8px;border-radius:9px;font-weight:600;font-size:15px;cursor:pointer;font-family:Inter,sans-serif;transition:background .2s ease,color .2s ease,box-shadow .2s ease}
+.tab.on{background:#fff;color:#1d1d1f;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.tab:active{transform:scale(.98)}
+.listfade{animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* Questions */
+.qrow{display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #e2e2e7;border-radius:14px;padding:12px 14px;margin-top:8px;cursor:pointer;text-align:left;transition:transform .15s ease,box-shadow .15s ease}
+.qrow:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.qrow:active{transform:scale(.99)}
+/* Marks distribution (Add / Edit Subject) */
+.dist-part{background:#f5f5f7;border:1px solid #e8e8ed;border-radius:14px;padding:14px;margin-top:10px}
+.dist-head{font-weight:700;font-size:14px;text-align:left}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.grid3 label{margin:8px 0 4px;font-size:11px}
+.grid3 input{padding:10px 12px}
+.dist-err{color:#c81e1e;font-size:13px;font-weight:600;margin-top:10px;display:none;text-align:left}
+.distline{font-size:13px;color:#86868b;font-weight:600;margin-top:14px;text-align:center}
+/* PDF options — Apple switches */
+.optrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid #e8e8ed;text-align:left}
+.optrow:last-child{border-bottom:0}
+.optrow b{display:block;font-size:15px}
+.optrow span{font-size:13px;color:#86868b}
+.optrow.sub{padding-left:16px}
+.optrow.off{opacity:.45}
+.optrow.off .switch{pointer-events:none}
+.switch{flex:none;width:52px;height:32px;border-radius:999px;border:0;background:#e2e2e7;cursor:pointer;position:relative;transition:background .2s ease;padding:0}
+.switch::after{content:'';position:absolute;top:2px;left:2px;width:28px;height:28px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .2s ease}
+.switch.on{background:#34c759}
+.switch.on::after{transform:translateX(20px)}
+.switch:active::after{width:32px}
 /* FAB — one + button, bottom-right, action follows the page */
 .fab{position:fixed;right:20px;bottom:24px;width:56px;height:56px;border-radius:50%;border:0;background:#1d1d1f;color:#fff;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.22);z-index:40}
 .fab:active{transform:scale(.96)}
@@ -179,7 +211,7 @@ html,body{background:#fff}
 <script>
 const DB_NAME='ChapterManagerDB', STORE='subjects', LS_FALLBACK='chapterManagerFallbackV1';
 let db=null, idbReady=false;
-let state={subjects:[], view:'main', subjectId:null, chapterId:null};
+let state={subjects:[], view:'main', subjectId:null, chapterId:null, chapterTab:'topics'};
 function $(id){return document.getElementById(id);}
 function uid(){return 'id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -221,7 +253,7 @@ if(!p || !p.subjectId) return null;
 let sub=findSubject(p.subjectId); if(!sub) return null;
 if(p.view==='chapter' && p.chapterId){
 let ch=findChapter(sub, p.chapterId); if(!ch) return null;
-state.view='chapter'; state.subjectId=sub.id; state.chapterId=ch.id;
+state.view='chapter'; state.subjectId=sub.id; state.chapterId=ch.id; state.chapterTab='topics';
 let topicId=null;
 if(p.topicId){ let t=ch.topics.find(x=>x.id===p.topicId); if(t) topicId=t.id; }
 return topicId;
@@ -234,7 +266,7 @@ if(location.hash==='#/' || location.hash===''){ formTopicId=null; state.view='ma
 let p=parseHash(); if(!p) return;
 let sub=findSubject(p.subjectId); if(!sub) return;
 if(p.view==='chapter' && p.chapterId && !findChapter(sub, p.chapterId)) return;
-formTopicId=null; state.view=p.view; state.subjectId=p.subjectId; state.chapterId=p.chapterId; render();
+formTopicId=null; state.view=p.view; state.subjectId=p.subjectId; state.chapterId=p.chapterId; if(p.view==='chapter') state.chapterTab='topics'; render();
 });
 
 async function loadAll(){
@@ -244,10 +276,14 @@ else { try{ state.subjects=JSON.parse(localStorage.getItem(LS_FALLBACK)||'[]'); 
 let migrated=false;
 state.subjects.forEach(sub=>{
 sub.chapters=sub.chapters||[];
+if(sub.dist===undefined){ sub.dist=null; migrated=true; }
+sub.dist=normalizeDist(sub.dist);
 sub.chapters.forEach(ch=>{
 if(!ch.difficulty){ ch.difficulty='medium'; migrated=true; }
 if(!ch.importance){ ch.importance='important'; migrated=true; }
 ch.topics=(ch.topics||[]).map(t=>({difficulty:'medium', importance:'important', note:'', ...t, note:(t.note||'')}));
+if(!ch.questions){ ch.questions=[]; migrated=true; }
+ch.questions=ch.questions.map(q=>({part:'A', cat:'K', answer:'', ...q, text:(q.text||'')}));
 });
 });
 if(migrated && idbReady){ for(let sub of state.subjects) await idbPut(sub); }
@@ -269,6 +305,43 @@ function closeAllDropdowns(){ document.querySelectorAll('.dd.open').forEach(d=>d
 const DIFF_OPTS=[{v:'easy',l:'Easy'},{v:'medium',l:'Medium'},{v:'hard',l:'Hard'}];
 const IMP_OPTS=[{v:'less',l:'Less important'},{v:'important',l:'Important'},{v:'very',l:'Very important'}];
 const DUR_OPTS=[{v:'60',l:'1 hour'},{v:'90',l:'1 hour 30 minutes'},{v:'120',l:'2 hours'},{v:'custom',l:'Custom…'}];
+const PART_OPTS=[{v:'A',l:'Part A'},{v:'B',l:'Part B'},{v:'C',l:'Part C'}];
+const CAT_OPTS=[{v:'K',l:'Remember (K)'},{v:'U',l:'Understand (U)'},{v:'A',l:'Apply (A)'},{v:'AN',l:'Analyze (AN)'}];
+function catLabel(v){ let o=CAT_OPTS.find(x=>x.v===v); return o?o.l:v; }
+function partLabel(v){ return 'Part '+v; }
+function numOr0(v){ let n=parseFloat(v); return Number.isFinite(n)?n:0; }
+function normalizeDist(d){
+if(!d) return null;
+let out={};
+['A','B','C'].forEach(p=>{ let x=d[p]||{}; out[p]={marks:numOr0(x.marks), total:numOr0(x.total), attempt:numOr0(x.attempt)}; });
+return out;
+}
+function distTotal(d){ if(!d) return 0; return ['A','B','C'].reduce((n,p)=>n+((d[p].attempt||0)*(d[p].marks||0)),0); }
+function anyDist(d){ if(!d) return false; return ['A','B','C'].some(p=>d[p] && (d[p].marks||d[p].total||d[p].attempt)); }
+function distError(d, maxMarks){
+if(!d || !anyDist(d)) return '';
+for(let p of ['A','B','C']){
+let x=d[p]||{marks:0,total:0,attempt:0};
+if(!x.marks || !x.total || !x.attempt) return 'Fill in marks, total and to attempt for Part '+p+' — or leave the whole distribution blank.';
+if(x.attempt>x.total) return 'Part '+p+': you cannot attempt '+x.attempt+' of '+x.total+' questions.';
+}
+let total=distTotal(d);
+if(total!==maxMarks) return 'That adds up to '+total+' marks, but this subject is '+maxMarks+' marks.';
+return '';
+}
+function distLine(d){
+if(!d || !anyDist(d)) return '';
+return ['A','B','C'].map(p=>'Part '+p+' '+d[p].attempt+' of '+d[p].total+' × '+d[p].marks).join('  ·  ')+'  —  '+distTotal(d)+' marks';
+}
+function groupQuestionsByPart(qs){
+let out={A:[],B:[],C:[]};
+(qs||[]).forEach(q=>{ let p=q.part==='B'?'B':(q.part==='C'?'C':'A'); out[p].push(q); });
+return out;
+}
+const PDF_OPTS_KEY='compartmentalizerPdfOptsV1';
+let pdfOpts={details:true, questions:true, answers:false};
+try{ let saved=JSON.parse(localStorage.getItem(PDF_OPTS_KEY)||'null'); if(saved) pdfOpts={details:true, questions:true, answers:false, ...saved}; }catch(e){}
+function savePdfOpts(){ try{ localStorage.setItem(PDF_OPTS_KEY, JSON.stringify(pdfOpts)); }catch(e){} }
 function ddHTML(kind, value, opts, extra, btnClass){
 let cur=opts.find(o=>String(o.v)===String(value))||opts[0];
 let menu=opts.map(o=>'<button type="button" class="dd-opt" data-value="'+o.v+'"><span>'+o.l+'</span><span class="tick">'+(String(o.v)===String(value)?'✓':'')+'</span></button>').join('');
@@ -326,13 +399,14 @@ function openSubject(id){ state.view='subject'; state.subjectId=id; state.chapte
 function openChapter(e, subId, chId){
 if(e && e.target.closest('.dd')) return;
 if(e && e.target.closest('.del')) return;
-state.view='chapter'; state.subjectId=subId; state.chapterId=chId; render(); window.scrollTo(0,0);
+state.view='chapter'; state.subjectId=subId; state.chapterId=chId; state.chapterTab='topics'; render(); window.scrollTo(0,0);
 }
+function switchChapterTab(tab){ state.chapterTab=tab; render(); }
 function goSubject(){ state.view='subject'; state.chapterId=null; render(); window.scrollTo(0,0); }
 function fabAction(){
 if(state.view==='main') openAddSubject();
 else if(state.view==='subject') openAddChapter(state.subjectId);
-else if(state.view==='chapter') openAddTopic(state.subjectId, state.chapterId);
+else if(state.view==='chapter'){ if(state.chapterTab==='questions') openAddQuestion(state.subjectId, state.chapterId); else openAddTopic(state.subjectId, state.chapterId); }
 }
 
 /* Render */
@@ -354,7 +428,8 @@ html+='<div class="card" style="text-align:center"><p class="empty" style="margi
 } else {
 state.subjects.forEach(sub=>{
 let totalTopics=sub.chapters.reduce((n,c)=>n+c.topics.length,0);
-html+='<div class="subj-tile" onclick="openSubject(\''+sub.id+'\')"><div><h3>'+esc(sub.name)+'</h3>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')+'<div class="meta">'+sub.chapters.length+' chapter'+(sub.chapters.length===1?'':'s')+' · '+totalTopics+' topic'+(totalTopics===1?'':'s')+'</div></div><span class="chev">›</span></div>';
+let totalQuestions=sub.chapters.reduce((n,c)=>n+(c.questions||[]).length,0);
+html+='<div class="subj-tile" onclick="openSubject(\''+sub.id+'\')"><div><h3>'+esc(sub.name)+'</h3>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')+'<div class="meta">'+sub.chapters.length+' chapter'+(sub.chapters.length===1?'':'s')+' · '+totalTopics+' topic'+(totalTopics===1?'':'s')+' · '+totalQuestions+' question'+(totalQuestions===1?'':'s')+'</div></div><span class="chev">›</span></div>';
 });
 }
 html+='<a class="explore" href="https://abybijo.github.io/learning-tools/"><span>Explore more tools</span><span>→</span></a>'
@@ -368,14 +443,16 @@ let html='<div style="text-align:left"><button class="back" onclick="goMain()">�
 +'<div class="pagehead"><h2>'+esc(sub.name)+'</h2>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')
 +'<button class="editbtn" onclick="openEditSubject(\''+sub.id+'\')" aria-label="Edit subject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button></div>'
 +'<div class="overview"><div class="stat"><b>'+fmtDur(sub.durationMin)+'</b><span>Time</span></div><div class="stat"><b>'+sub.maxMarks+'</b><span>Marks</span></div><div class="stat"><b>'+sub.chapters.length+'</b><span>Chapters</span></div><div class="stat"><b>'+totalTopics+'</b><span>Topics</span></div></div>'
++(sub.dist && anyDist(sub.dist) ? '<div class="distline">'+esc(distLine(sub.dist))+'</div>' : '')
 +'<div style="margin-top:16px"><button class="btn" onclick="saveSubjectPDF(\''+sub.id+'\')">Save subject as PDF</button></div>'
 +'<div class="section-label">Chapters</div>';
 if(!sub.chapters.length){
 html+='<div class="card" style="text-align:center"><p class="empty" style="margin:0">No chapters yet.<br>Tap + below to add your first chapter.</p></div>';
 } else {
 sub.chapters.forEach(ch=>{
+let qCount=(ch.questions||[]).length;
 html+='<div class="chapter-row" onclick="openChapter(event,\''+sub.id+'\',\''+ch.id+'\')"><h4>'+esc(ch.name)+'</h4>'
-+'<div class="chapter-meta"><span class="pill diff-'+ch.difficulty+'">'+diffLabel(ch.difficulty)+'</span><span class="pill imp-'+ch.importance+'">'+impLabel(ch.importance)+'</span><span class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'</span></div></div>';
++'<div class="chapter-meta"><span class="pill diff-'+ch.difficulty+'">'+diffLabel(ch.difficulty)+'</span><span class="pill imp-'+ch.importance+'">'+impLabel(ch.importance)+'</span><span class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+' · '+qCount+' question'+(qCount===1?'':'s')+'</span></div></div>';
 });
 }
 $('viewSubject').innerHTML=html;
@@ -387,18 +464,32 @@ return '<div class="topic" data-topic="'+t.id+'" data-chapter="'+ch.id+'" data-s
 +'<div class="topic-main"><div class="name">'+esc(t.name)+'</div>'
 +'<div class="topic-meta"><span class="pill diff-'+t.difficulty+'">'+diffLabel(t.difficulty)+'</span><span class="pill imp-'+t.importance+'">'+impLabel(t.importance)+'</span>'+(preview?'<span class="note-preview">'+esc(preview)+'</span>':'')+'</div></div></div>';
 }
+function questionRowHTML(sub, ch, q){
+return '<div class="qrow" onclick="openQuestionPopup(\''+sub.id+'\',\''+ch.id+'\',\''+q.id+'\')">'
++'<div class="topic-main"><div class="name">'+esc(q.text)+'</div>'
++'<div class="topic-meta"><span class="pill">'+partLabel(q.part)+'</span><span class="pill">'+catLabel(q.cat)+'</span></div></div><span class="chev">›</span></div>';
+}
 function renderChapter(){
 let sub=findSubject(state.subjectId); let ch=sub ? findChapter(sub, state.chapterId) : null;
 if(!sub || !ch){ goMain(); return; }
+let qCount=(ch.questions||[]).length;
 let html='<div style="text-align:left"><button class="back" onclick="goSubject()">‹ '+esc(sub.name)+'</button></div>'
 +'<div class="pagehead"><h2>'+esc(ch.name)+'</h2>'
 +'<button class="editbtn" onclick="openEditChapter(\''+sub.id+'\',\''+ch.id+'\')" aria-label="Edit chapter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button></div>'
-+'<div class="chapter-meta" style="justify-content:center;margin-top:12px"><span class="pill diff-'+ch.difficulty+'">'+diffLabel(ch.difficulty)+'</span><span class="pill imp-'+ch.importance+'">'+impLabel(ch.importance)+'</span><span class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'</span></div>'
-+'<div class="section-label">Topics</div>';
-if(!ch.topics.length){
-html+='<div class="card" style="text-align:center"><p class="empty" style="margin:0">No topics yet.<br>Tap + below to add your first topic.</p></div>';
++'<div class="chapter-meta" style="justify-content:center;margin-top:12px"><span class="pill diff-'+ch.difficulty+'">'+diffLabel(ch.difficulty)+'</span><span class="pill imp-'+ch.importance+'">'+impLabel(ch.importance)+'</span><span class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+' · '+qCount+' question'+(qCount===1?'':'s')+'</span></div>'
++'<div class="tabs"><button class="tab'+(state.chapterTab==='topics'?' on':'')+'" onclick="switchChapterTab(\'topics\')">Topics</button><button class="tab'+(state.chapterTab==='questions'?' on':'')+'" onclick="switchChapterTab(\'questions\')">Questions</button></div>';
+if(state.chapterTab==='questions'){
+if(!qCount){
+html+='<div class="card listfade" style="text-align:center"><p class="empty" style="margin:0">No questions yet.<br>Tap + below to add your first question.</p></div>';
 } else {
-html+='<div data-chapter-list="'+ch.id+'">'+ch.topics.map(t=>topicRowHTML(sub,ch,t)).join('')+'</div>';
+html+='<div class="listfade">'+ch.questions.map(q=>questionRowHTML(sub,ch,q)).join('')+'</div>';
+}
+} else {
+if(!ch.topics.length){
+html+='<div class="card listfade" style="text-align:center"><p class="empty" style="margin:0">No topics yet.<br>Tap + below to add your first topic.</p></div>';
+} else {
+html+='<div class="listfade" data-chapter-list="'+ch.id+'">'+ch.topics.map(t=>topicRowHTML(sub,ch,t)).join('')+'</div>';
+}
 }
 html+='<div style="margin-top:22px"><button class="btn" onclick="saveChapterPDF(\''+sub.id+'\',\''+ch.id+'\')">Save as PDF</button></div>'
 +'<div style="margin-top:16px;text-align:center"><button class="smallbtn danger" onclick="deleteChapter(\''+sub.id+'\',\''+ch.id+'\')">Delete chapter</button></div>';
@@ -406,7 +497,11 @@ $('viewChapter').innerHTML=html;
 bindDrag();
 }
 
-/* Drag and drop — topics only, pointer-based, mouse and touch */
+/* Drag and drop — topics only, pointer-based, mouse and touch.
+   The row follows the finger 1:1 (no transition lag), the list itself never
+   moves during the drag — only a drop line shows where it will land — and the
+   new order is committed once, when the finger lifts. A tap on the handle
+   without moving changes nothing. */
 let drag=null, dragJustEnded=false;
 function bindDrag(){
 document.querySelectorAll('.handle').forEach(h=>{
@@ -414,7 +509,7 @@ h.addEventListener('pointerdown', e=>{
 e.preventDefault();
 let row=h.closest('.topic'); if(!row) return;
 let list=row.parentElement;
-drag={row:row, list:list, startY:e.clientY, subject:row.dataset.subject, chapter:row.dataset.chapter};
+drag={row:row, handle:h, list:list, startY:e.clientY, subject:row.dataset.subject, chapter:row.dataset.chapter, targetIndex:null};
 row.classList.add('dragging'); row.style.transform='translateY(0px)';
 try{ h.setPointerCapture(e.pointerId); }catch(err){}
 h.addEventListener('pointermove', onDragMove);
@@ -428,19 +523,27 @@ if(!drag) return;
 let dy=e.clientY-drag.startY; drag.row.style.transform='translateY('+dy+'px)';
 let rows=[...drag.list.querySelectorAll('.topic')].filter(r=>r!==drag.row);
 rows.forEach(r=>r.classList.remove('drop-before','drop-after'));
-let target=null, before=true;
-for(let r of rows){ let rect=r.getBoundingClientRect(); let mid=rect.top+rect.height/2; if(e.clientY<mid){ target=r; before=true; break; } target=r; before=false; }
-if(target){ if(before){ drag.list.insertBefore(drag.row, target); target.classList.add('drop-before'); } else { drag.list.insertBefore(drag.row, target.nextSibling); target.classList.add('drop-after'); } }
+let targetIndex=rows.length;
+for(let i=0;i<rows.length;i++){ let rect=rows[i].getBoundingClientRect(); if(e.clientY<rect.top+rect.height/2){ targetIndex=i; break; } }
+drag.targetIndex=targetIndex;
+if(targetIndex<rows.length) rows[targetIndex].classList.add('drop-before');
+else if(rows.length) rows[rows.length-1].classList.add('drop-after');
 }
 async function onDragEnd(){
 if(!drag) return;
 let d=drag; drag=null;
+if(d.handle) d.handle.removeEventListener('pointermove', onDragMove);
 d.row.classList.remove('dragging'); d.row.style.transform='';
 d.list.querySelectorAll('.topic').forEach(r=>r.classList.remove('drop-before','drop-after'));
 dragJustEnded=true; setTimeout(()=>{ dragJustEnded=false; }, 200);
-let order=[...d.list.querySelectorAll('.topic')].map(r=>r.dataset.topic);
+if(d.targetIndex==null) return;
 let sub=findSubject(d.subject); if(!sub) return; let ch=sub.chapters.find(c=>c.id===d.chapter); if(!ch) return;
-let byId={}; ch.topics.forEach(t=>byId[t.id]=t); ch.topics=order.map(id=>byId[id]).filter(Boolean);
+let id=d.row.dataset.topic;
+let item=ch.topics.find(t=>t.id===id); if(!item) return;
+let without=ch.topics.filter(t=>t.id!==id);
+let idx=Math.min(d.targetIndex, without.length);
+without.splice(idx, 0, item);
+ch.topics=without;
 await saveSubject(sub); render();
 }
 </script>
@@ -468,23 +571,56 @@ let dd=$(id); let val=dd ? dd.dataset.value : '120';
 if(val==='custom'){ let inp=$(kind==='edit-dur'?'editCustomMin':'customMin'); return parseInt(inp.value,10); }
 return parseInt(val,10);
 }
+function numVal(el){ if(!el || el.value==='' || el.value==null) return 0; let v=parseFloat(el.value); return Number.isFinite(v)?v:0; }
+function readDist(){
+let d={};
+['A','B','C'].forEach(p=>{
+d[p]={marks:numVal($('dist'+p+'marks')), total:numVal($('dist'+p+'total')), attempt:numVal($('dist'+p+'attempt'))};
+});
+return d;
+}
+function distFieldsHTML(dist){
+let d=dist||{A:{marks:'',total:'',attempt:''},B:{marks:'',total:'',attempt:''},C:{marks:'',total:'',attempt:''}};
+function row(p){ let x=d[p]||{marks:'',total:'',attempt:''};
+return '<div class="dist-part"><div class="dist-head">Part '+p+'</div><div class="grid3">'
++'<div><label>Marks each</label><input type="number" id="dist'+p+'marks" value="'+(x.marks||'')+'" placeholder="e.g. 2" min="1" inputmode="numeric" oninput="updateDistSummary()"></div>'
++'<div><label>Out of</label><input type="number" id="dist'+p+'total" value="'+(x.total||'')+'" placeholder="e.g. 8" min="1" inputmode="numeric" oninput="updateDistSummary()"></div>'
++'<div><label>To attempt</label><input type="number" id="dist'+p+'attempt" value="'+(x.attempt||'')+'" placeholder="e.g. 5" min="1" inputmode="numeric" oninput="updateDistSummary()"></div>'
++'</div></div>'; }
+return '<div id="distWrap" style="display:none"><label style="margin-top:18px">Marks distribution — optional</label>'
++row('A')+row('B')+row('C')
++'<p class="mut" id="distSummary" style="margin-top:10px">Optional — leave blank if you have not set it up yet.</p>'
++'<div class="dist-err" id="distError"></div></div>';
+}
+function updateDistSummary(){
+let wrap=$('distWrap'); if(!wrap) return;
+let marks=parseInt(($('fMarks')||{value:''}).value,10);
+wrap.style.display=(marks>0)?'block':'none';
+let d=readDist();
+let sum=$('distSummary');
+if(sum) sum.textContent=anyDist(d)?('Attempted total: '+distTotal(d)+' of '+(marks||0)+' marks'):'Optional — leave blank if you have not set it up yet.';
+let er=$('distError');
+if(er){ let err=(marks>0)?distError(d, marks):''; er.textContent=err; er.style.display=err?'block':'none'; }
+}
 function openAddSubject(){
 openForm('Add Subject',
 '<label>Subject name</label><input type="text" id="fName" placeholder="e.g. Quantitative Techniques" autocomplete="off">'
 +'<label>Subject code</label><input type="text" id="fCode" placeholder="e.g. MG3CCRBCA200" autocomplete="off">'
 +durationFields('add-dur', 'durDD', 120, '')
-+'<label>Maximum marks</label><input type="number" id="fMarks" placeholder="e.g. 70" min="1" inputmode="numeric">',
++'<label>Maximum marks</label><input type="number" id="fMarks" placeholder="e.g. 70" min="1" inputmode="numeric" oninput="updateDistSummary()">'
++distFieldsHTML(null),
 'Add subject', async ()=>{
 let name=$('fName').value.trim(); let code=$('fCode').value.trim();
 let marks=parseInt($('fMarks').value,10); let min=readDuration('add-dur','durDD');
 if(!name){ showToast('Add a subject name first.'); $('fName').focus(); return; }
 if(!marks || marks<=0){ showToast('Add the maximum marks, e.g. 70.'); $('fMarks').focus(); return; }
 if(!min || min<=0){ showToast('Choose a duration, or type custom minutes.'); return; }
-state.subjects.push({id:uid(), name:name, code:code, durationMin:min, maxMarks:marks, chapters:[]});
+let d=readDist(); let distErr=distError(d, marks); if(distErr){ showToast(distErr); return; }
+state.subjects.push({id:uid(), name:name, code:code, durationMin:min, maxMarks:marks, dist:anyDist(d)?d:null, chapters:[]});
 await saveSubject(state.subjects[state.subjects.length-1]);
 closeForm(); showToast('Subject added.'); render();
 });
-setTimeout(()=>{ let n=$('fName'); if(n) n.focus(); }, 50);
+setTimeout(()=>{ updateDistSummary(); let n=$('fName'); if(n) n.focus(); }, 50);
 }
 function openEditSubject(id){
 let sub=findSubject(id); if(!sub) return;
@@ -492,15 +628,18 @@ openForm('Edit Subject',
 '<label>Subject name</label><input type="text" id="fName" value="'+esc(sub.name)+'" autocomplete="off">'
 +'<label>Subject code</label><input type="text" id="fCode" value="'+esc(sub.code)+'" autocomplete="off">'
 +durationFields('edit-dur', 'editDurDD', sub.durationMin, '')
-+'<label>Maximum marks</label><input type="number" id="fMarks" value="'+sub.maxMarks+'" min="1" inputmode="numeric">',
++'<label>Maximum marks</label><input type="number" id="fMarks" value="'+sub.maxMarks+'" min="1" inputmode="numeric" oninput="updateDistSummary()">'
++distFieldsHTML(sub.dist),
 'Save', async ()=>{
 let name=$('fName').value.trim(); let code=$('fCode').value.trim();
 let marks=parseInt($('fMarks').value,10); let min=readDuration('edit-dur','editDurDD');
 if(!name || !marks || marks<=0 || !min || min<=0){ showToast('Fill in name, maximum marks and duration.'); return; }
-sub.name=name; sub.code=code; sub.maxMarks=marks; sub.durationMin=min;
+let d=readDist(); let distErr=distError(d, marks); if(distErr){ showToast(distErr); return; }
+sub.name=name; sub.code=code; sub.maxMarks=marks; sub.durationMin=min; sub.dist=anyDist(d)?d:null;
 await saveSubject(sub); closeForm(); showToast('Subject saved.'); render();
 },
 '<div style="margin-top:16px;text-align:center"><button class="smallbtn danger" onclick="closeForm();deleteSubject(\''+sub.id+'\')">Delete subject</button></div>');
+setTimeout(()=>updateDistSummary(), 50);
 }
 function openAddChapter(subjectId){
 let sub=findSubject(subjectId); if(!sub) return;
@@ -534,6 +673,59 @@ await saveSubject(sub); closeForm(); showToast('Topic added.'); render();
 setTimeout(()=>{ let n=$('fTopicName'); if(n) n.focus(); }, 50);
 }
 
+
+/* Questions — tap a question to see it (view-only). Edit and Delete are separate actions. */
+function openAddQuestion(subjectId, chapterId){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+openForm('Add Question',
+'<label>Question</label><textarea id="fQText" placeholder="Write the question" autocomplete="off"></textarea>'
++'<label>Part</label>'+ddHTML('addq-part', 'A', PART_OPTS, 'id="addQPart"', 'dd-btn')
++'<label>Category</label>'+ddHTML('addq-cat', 'K', CAT_OPTS, 'id="addQCat"', 'dd-btn')
++'<label>Answer</label><textarea id="fQAnswer" placeholder="Write the answer (optional)"></textarea>',
+'Add question', async ()=>{
+let text=$('fQText').value.trim();
+if(!text){ showToast('Write the question first.'); $('fQText').focus(); return; }
+ch.questions=ch.questions||[];
+ch.questions.push({id:uid(), text:text, part:$('addQPart').dataset.value, cat:$('addQCat').dataset.value, answer:$('fQAnswer').value});
+await saveSubject(sub); closeForm(); showToast('Question added.'); render();
+});
+setTimeout(()=>{ let n=$('fQText'); if(n) n.focus(); }, 50);
+}
+function openQuestionPopup(subjectId, chapterId, questionId){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+let q=(ch.questions||[]).find(x=>x.id===questionId); if(!q) return;
+openForm('Question',
+'<div class="chapter-meta" style="justify-content:center;margin-top:0"><span class="pill">'+partLabel(q.part)+'</span><span class="pill">'+catLabel(q.cat)+'</span></div>'
++'<label>Question</label><div class="view-note">'+esc(q.text)+'</div>'
++'<label>Answer</label>'+(q.answer ? '<div class="view-note">'+esc(q.answer)+'</div>' : '<p class="empty" style="margin:6px 0 0">No answer yet. Tap Edit question to add one.</p>'),
+'Edit question', ()=>{ openEditQuestion(subjectId, chapterId, questionId); },
+'<div style="margin-top:16px;text-align:center"><button class="smallbtn danger" onclick="closeForm();deleteQuestion(\''+sub.id+'\',\''+ch.id+'\',\''+q.id+'\')">Delete question</button></div>');
+}
+function openEditQuestion(subjectId, chapterId, questionId){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+let q=(ch.questions||[]).find(x=>x.id===questionId); if(!q) return;
+openForm('Edit Question',
+'<label>Question</label><textarea id="fQText" autocomplete="off">'+esc(q.text)+'</textarea>'
++'<label>Part</label>'+ddHTML('editq-part', q.part, PART_OPTS, 'id="editQPart"', 'dd-btn')
++'<label>Category</label>'+ddHTML('editq-cat', q.cat, CAT_OPTS, 'id="editQCat"', 'dd-btn')
++'<label>Answer</label><textarea id="fQAnswer" placeholder="Write the answer (optional)">'+esc(q.answer||'')+'</textarea>',
+'Save', async ()=>{
+let text=$('fQText').value.trim();
+if(!text){ showToast('Write the question first.'); $('fQText').focus(); return; }
+q.text=text; q.part=$('editQPart').dataset.value; q.cat=$('editQCat').dataset.value; q.answer=$('fQAnswer').value;
+await saveSubject(sub); closeForm(); showToast('Question saved.'); render();
+},
+'<div style="margin-top:16px;text-align:center"><button class="smallbtn danger" onclick="closeForm();deleteQuestion(\''+sub.id+'\',\''+ch.id+'\',\''+q.id+'\')">Delete question</button></div>');
+}
+function deleteQuestion(subjectId, chapterId, questionId){
+let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+let q=(ch.questions||[]).find(x=>x.id===questionId); if(!q) return;
+let short=q.text.length>60 ? q.text.slice(0,60)+'…' : q.text;
+askDelete('Delete question?', '"'+short+'" will be removed.', async ()=>{
+ch.questions=ch.questions.filter(x=>x.id!==questionId);
+await saveSubject(sub); render(); showToast('Question deleted.');
+});
+}
 
 /* Topic pop-up — tap a topic to see it. Difficulty / importance are fixed here;
    only Edit topic can change them. */
@@ -694,19 +886,91 @@ pill:pill, pillsRow:pillsRow, need:need, rule:rule, footer:footer, eyebrow:eyebr
 function printFallback(html){
 $('printArea').innerHTML=html; window.print();
 }
-async function saveChapterPDF(subjectId, chapterId){
+function togglePdfOpt(key){
+pdfOpts[key]=!pdfOpts[key]; savePdfOpts();
+let ids={details:'pdfOptDetails', questions:'pdfOptQuestions', answers:'pdfOptAnswers'};
+let b=$(ids[key]); if(b) b.classList.toggle('on', !!pdfOpts[key]);
+let row=$('pdfOptAnswersRow'); if(row) row.classList.toggle('off', !pdfOpts.questions);
+}
+function pdfOptionsHTML(){
+return '<div class="optrow"><div><b>Chapter details</b><span>Topics, notes and everything in the chapter</span></div><button type="button" class="switch'+(pdfOpts.details?' on':'')+'" id="pdfOptDetails" onclick="togglePdfOpt(\'details\')"></button></div>'
++'<div class="optrow"><div><b>Questions</b><span>All questions in this chapter, grouped by part</span></div><button type="button" class="switch'+(pdfOpts.questions?' on':'')+'" id="pdfOptQuestions" onclick="togglePdfOpt(\'questions\')"></button></div>'
++'<div class="optrow sub'+(pdfOpts.questions?'':' off')+'" id="pdfOptAnswersRow"><div><b>Answers</b><span>Include the answer under each question</span></div><button type="button" class="switch'+(pdfOpts.answers?' on':'')+'" id="pdfOptAnswers" onclick="togglePdfOpt(\'answers\')"></button></div>'
++'<p class="mut" style="margin-top:12px">Questions without answers look like a traditional question paper — grouped by part, with marks.</p>';
+}
+function addQuestionsToPdf(P, ch, sub, includeAnswers){
+let doc=P.doc;
+let grouped=groupQuestionsByPart(ch.questions||[]);
+let parts=['A','B','C'].filter(p=>grouped[p].length);
+if(!parts.length) return false;
+P.need(30);
+doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(P.INK[0],P.INK[1],P.INK[2]);
+doc.text('Questions', P.M, P.getY()); P.addY(12);
+parts.forEach(p=>{
+let d=sub.dist && sub.dist[p];
+let head='Part '+p;
+if(d && d.marks && d.total && d.attempt) head+='  —  Answer any '+d.attempt+' questions. Each question carries '+d.marks+' mark'+(d.marks===1?'':'s')+'.';
+let headLines=doc.splitTextToSize(head, P.CW);
+P.need(headLines.length*7+10);
+doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(P.INK[0],P.INK[1],P.INK[2]);
+doc.text(headLines, P.M, P.getY()); P.addY(headLines.length*7+6);
+grouped[p].forEach((q,i)=>{
+let label=(i+1)+'. '+q.text+'  ('+q.cat+')';
+let qLines=doc.splitTextToSize(label, P.CW);
+let aLines=includeAnswers && q.answer ? doc.splitTextToSize('Answer: '+q.answer, P.CW) : [];
+let blockH=qLines.length*6 + (aLines.length ? 4+aLines.length*6 : 0) + 8;
+P.need(blockH);
+doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(P.INK[0],P.INK[1],P.INK[2]);
+doc.text(qLines, P.M, P.getY()); P.addY(qLines.length*6);
+if(aLines.length){
+doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(P.GREY[0],P.GREY[1],P.GREY[2]);
+doc.text(aLines, P.M, P.getY()); P.addY(aLines.length*6);
+}
+P.addY(4);
+doc.setDrawColor(P.LINE[0],P.LINE[1],P.LINE[2]); doc.setLineWidth(0.3); doc.line(P.M, P.getY(), P.W-P.M, P.getY()); P.addY(8);
+});
+});
+return true;
+}
+function printQuestionsHTML(ch, sub, includeAnswers){
+let grouped=groupQuestionsByPart(ch.questions||[]);
+let parts=['A','B','C'].filter(p=>grouped[p].length);
+if(!parts.length) return '';
+let html='<div class="print-topic"><h3>Questions</h3></div>';
+parts.forEach(p=>{
+let d=sub.dist && sub.dist[p];
+let head='Part '+p+(d&&d.marks&&d.total&&d.attempt?(' — Answer any '+d.attempt+' questions. Each question carries '+d.marks+' mark'+(d.marks===1?'':'s')+'.'):'');
+html+='<div class="print-topic"><h3>'+esc(head)+'</h3>';
+grouped[p].forEach((q,i)=>{
+html+='<div class="pnote" style="margin-top:8px"><b>'+(i+1)+'.</b> '+esc(q.text)+' ('+esc(q.cat)+')</div>';
+if(includeAnswers && q.answer) html+='<div class="pnote" style="color:#6e6e73">Answer: '+esc(q.answer)+'</div>';
+});
+html+='</div>';
+});
+return html;
+}
+function saveChapterPDF(subjectId, chapterId){
+openForm('Save as PDF', pdfOptionsHTML(), 'Download PDF', ()=>{ genChapterPDF(subjectId, chapterId); });
+}
+async function genChapterPDF(subjectId, chapterId){
 let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+if(!pdfOpts.details && !pdfOpts.questions){ showToast('Choose at least one thing to include.'); return; }
+if(pdfOpts.questions && !(ch.questions||[]).length && !pdfOpts.details){ showToast('No questions in this chapter yet.'); return; }
+closeForm();
 try{ await loadJsPDF(); }
 catch(e){
 showToast('PDF needs internet the first time — opening print instead.');
 let html='<div class="print-chapter"><h1>'+esc(ch.name)+'</h1>'
-+'<p class="pline">'+esc(sub.name)+'</p><p class="pline">'+esc(sub.code)+'</p>'
-+'<p class="pline">Difficulty: '+diffLabel(ch.difficulty)+'</p><p class="pline">Importance: '+impLabel(ch.importance)+'</p>';
++'<p class="pline">'+esc(sub.name)+'</p><p class="pline">'+esc(sub.code)+'</p>';
+if(pdfOpts.details){
+html+='<p class="pline">Difficulty: '+diffLabel(ch.difficulty)+'</p><p class="pline">Importance: '+impLabel(ch.importance)+'</p>';
 ch.topics.forEach((t,i)=>{
 html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(t.name)+'</h3>'
 +'<div class="pmeta">Difficulty: '+diffLabel(t.difficulty)+' · Importance: '+impLabel(t.importance)+'</div>'
 +(t.note ? '<div class="pnote">'+esc(t.note)+'</div>' : '<div class="pmeta" style="margin-top:6px">No notes.</div>')+'</div>';
 });
+}
+if(pdfOpts.questions){ html+=printQuestionsHTML(ch, sub, pdfOpts.answers); }
 html+='</div>'; printFallback(html); return;
 }
 showToast('Making your PDF…');
@@ -720,24 +984,34 @@ doc.text(sub.name, P.W/2, P.getY(), {align:'center'}); P.addY(7);
 if(sub.code){ doc.setFontSize(11); doc.text(sub.code, P.W/2, P.getY(), {align:'center'}); P.addY(10); } else { P.addY(3); }
 P.pillsRow([{text:diffLabel(ch.difficulty), color:diffColor(ch.difficulty)}, {text:impLabel(ch.importance), color:impColor(ch.importance)}], P.getY()); P.addY(14);
 P.rule();
-ch.topics.forEach((t,i)=>{ P.topicBlock(String(i+1), t); });
+if(pdfOpts.details){ ch.topics.forEach((t,i)=>{ P.topicBlock(String(i+1), t); }); }
+if(pdfOpts.questions){ addQuestionsToPdf(P, ch, sub, pdfOpts.answers); }
 P.footer();
 doc.save(pdfSafeName(sub.name)+' – '+pdfSafeName(ch.name)+'.pdf');
 showToast('PDF downloaded.');
 }
-async function saveSubjectPDF(subjectId){
+function saveSubjectPDF(subjectId){
+openForm('Save as PDF', pdfOptionsHTML(), 'Download PDF', ()=>{ genSubjectPDF(subjectId); });
+}
+async function genSubjectPDF(subjectId){
 let sub=findSubject(subjectId); if(!sub) return;
+if(!pdfOpts.details && !pdfOpts.questions){ showToast('Choose at least one thing to include.'); return; }
+if(pdfOpts.questions && !pdfOpts.details && !sub.chapters.some(c=>(c.questions||[]).length)){ showToast('No questions in this subject yet.'); return; }
+closeForm();
 try{ await loadJsPDF(); }
 catch(e){
 showToast('PDF needs internet the first time — opening print instead.');
 let html='<div class="print-chapter"><h1>'+esc(sub.name)+'</h1><p class="pline">'+esc(sub.code)+'</p>';
 sub.chapters.forEach((ch)=>{
-html+='<div class="print-topic"><h3>'+esc(ch.name)+'</h3><div class="pmeta">Difficulty: '+diffLabel(ch.difficulty)+' · Importance: '+impLabel(ch.importance)+'</div></div>';
+html+='<div class="print-topic"><h3>'+esc(ch.name)+'</h3>'+(pdfOpts.details?'<div class="pmeta">Difficulty: '+diffLabel(ch.difficulty)+' · Importance: '+impLabel(ch.importance)+'</div>':'')+'</div>';
+if(pdfOpts.details){
 ch.topics.forEach((t,i)=>{
 html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(t.name)+'</h3>'
 +'<div class="pmeta">Difficulty: '+diffLabel(t.difficulty)+' · Importance: '+impLabel(t.importance)+'</div>'
 +(t.note ? '<div class="pnote">'+esc(t.note)+'</div>' : '<div class="pmeta" style="margin-top:6px">No notes.</div>')+'</div>';
 });
+}
+if(pdfOpts.questions){ html+=printQuestionsHTML(ch, sub, pdfOpts.answers); }
 });
 html+='</div>'; printFallback(html); return;
 }
@@ -751,7 +1025,9 @@ doc.text(titleLines, P.W/2, P.getY(), {align:'center'}); P.addY(titleLines.lengt
 doc.setFont('helvetica','normal'); doc.setFontSize(13); doc.setTextColor(P.GREY[0],P.GREY[1],P.GREY[2]);
 if(sub.code){ doc.text(sub.code, P.W/2, P.getY(), {align:'center'}); P.addY(8); }
 doc.setFontSize(11);
-doc.text(fmtDur(sub.durationMin)+'  ·  '+sub.maxMarks+' marks  ·  '+sub.chapters.length+' chapters  ·  '+totalTopics+' topics', P.W/2, P.getY(), {align:'center'}); P.addY(14);
+doc.text(fmtDur(sub.durationMin)+'  ·  '+sub.maxMarks+' marks  ·  '+sub.chapters.length+' chapters  ·  '+totalTopics+' topics', P.W/2, P.getY(), {align:'center'}); P.addY(8);
+if(sub.dist && anyDist(sub.dist)){ doc.setFontSize(11); doc.text(distLine(sub.dist), P.W/2, P.getY(), {align:'center'}); P.addY(8); }
+P.addY(6);
 P.rule();
 sub.chapters.forEach((ch, ci)=>{
 if(ci>0){ doc.addPage(); P.setY(P.M); }
@@ -760,9 +1036,10 @@ let chLines=doc.splitTextToSize(ch.name, P.CW);
 doc.text(chLines, P.W/2, P.getY(), {align:'center'}); P.addY(chLines.length*9+4);
 P.pillsRow([{text:diffLabel(ch.difficulty), color:diffColor(ch.difficulty)}, {text:impLabel(ch.importance), color:impColor(ch.importance)}], P.getY()); P.addY(6);
 doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(P.GREY[0],P.GREY[1],P.GREY[2]);
-doc.text(ch.topics.length+' topic'+(ch.topics.length===1?'':'s'), P.W/2, P.getY(), {align:'center'}); P.addY(12);
+doc.text(ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'  ·  '+(ch.questions||[]).length+' question'+((ch.questions||[]).length===1?'':'s'), P.W/2, P.getY(), {align:'center'}); P.addY(12);
 P.rule();
-ch.topics.forEach((t,i)=>{ P.topicBlock(String(i+1), t); });
+if(pdfOpts.details){ ch.topics.forEach((t,i)=>{ P.topicBlock(String(i+1), t); }); }
+if(pdfOpts.questions){ addQuestionsToPdf(P, ch, sub, pdfOpts.answers); }
 });
 P.footer();
 doc.save(pdfSafeName(sub.name)+'.pdf');
