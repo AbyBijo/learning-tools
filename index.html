@@ -30,19 +30,15 @@ h1{font-size:clamp(40px,7vw,64px);line-height:1.02;letter-spacing:-.035em;margin
 .section-head h2{font-size:22px;letter-spacing:-.02em;margin:0;font-weight:700}
 .section-head span{color:#86868b;font-size:13px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;grid-auto-rows:1fr;align-items:stretch}
-.card{background:#fff;border:1px solid #e8e8ed;border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:14px;height:100%;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .2s ease,box-shadow .2s ease}
+.card{position:relative;overflow:hidden;background-image:url('tile-background.jpg');background-size:cover;background-position:center;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:24px;padding:24px;display:flex;flex-direction:column;gap:14px;height:100%;min-height:190px;box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .2s ease,box-shadow .2s ease}
+.card::before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,.48))}
+.card>*{position:relative;z-index:1}
 .card:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.08)}
-.card-top{display:flex;align-items:center;gap:14px}
-.card-top h3{margin:0}
 .card p{flex:1}
 .open-row{display:flex;justify-content:flex-end;margin-top:auto}
-.icon{width:52px;height:52px;border-radius:16px;background:#f5f5f7;border:1px solid #e8e8ed;display:grid;place-items:center;flex:none;color:#0071e3}
-.icon svg{width:26px;height:26px}
-.card h3{font-size:19px;letter-spacing:-.01em;font-weight:700}
-.card p{color:#6e6e73;font-size:15px;line-height:1.55;margin:0}
-.meta{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
-.pill{font-size:12px;font-weight:600;color:#424245;background:#f5f5f7;border:1px solid #e8e8ed;border-radius:999px;padding:5px 10px}
-.open{flex:none;color:#0071e3;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.card h3{font-size:25px;letter-spacing:-.02em;font-weight:800;text-align:left;margin:0;color:#fff}
+.card p{color:rgba(255,255,255,.88);font-size:15px;line-height:1.55;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.open{flex:none;color:#1d1d1f;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.65);border-radius:12px;padding:10px 18px}
 .open svg{width:16px;height:16px}
 .note{background:#fff;border:1px solid #e8e8ed;border-radius:24px;padding:24px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
 .note h3{margin:0 0 8px;font-size:17px}
@@ -80,25 +76,13 @@ footer a{color:#1d1d1f;font-weight:600;text-decoration:none}
     <div class="section-head"><h2>All tools</h2><span id="tool-count">2 tools</span></div>
     <div class="grid" id="tool-grid">
       <a class="card" href="tools/exam-timer.html">
-        <span class="card-top">
-          <span class="icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>
-          </span>
-          <h3>Exam Timer</h3>
-        </span>
-        <p>General exam timer with a PDF paper beside the clock. Choose a duration, load any paper, start — then no pause, no stop.</p>
-        <span class="meta"><span class="pill">1h 30m</span><span class="pill">1h 45m</span><span class="pill">2h</span><span class="pill">Load any PDF</span></span>
+        <h3>Exam Timer</h3>
+        <p>Strict exam timer with your paper beside the clock.</p>
         <span class="open-row"><span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span></span>
       </a>
       <a class="card" href="tools/compartmentalizer.html">
-        <span class="card-top">
-          <span class="icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 10h18"/></svg>
-          </span>
-          <h3>Compartmentalizer</h3>
-        </span>
-        <p>Organise subjects into chapters and topics. Add exam time and max marks, drag topics to reorder, and keep everything saved in this browser.</p>
-        <span class="meta"><span class="pill">Subjects</span><span class="pill">Chapters</span><span class="pill">Topics</span><span class="pill">Drag to reorder</span></span>
+        <h3>Compartmentalizer</h3>
+        <p>Subjects, chapters and topics, saved in this browser.</p>
         <span class="open-row"><span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span></span>
       </a>
     </div>
@@ -122,13 +106,6 @@ footer a{color:#1d1d1f;font-weight:600;text-decoration:none}
     return base.replace(/\b\w/g, function (c) { return c.toUpperCase(); });
   }
 
-  function iconFor(name) {
-    if (name.indexOf('timer') !== -1 || name.indexOf('clock') !== -1) {
-      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/><path d="M9 2h6"/></svg>';
-    }
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg>';
-  }
-
   fetch('https://api.github.com/repos/AbyBijo/learning-tools/contents/tools')
     .then(function (r) { if (!r.ok) throw new Error('listing unavailable'); return r.json(); })
     .then(function (items) {
@@ -139,8 +116,7 @@ footer a{color:#1d1d1f;font-weight:600;text-decoration:none}
           var a = document.createElement('a');
           a.className = 'card';
           a.href = 'tools/' + encodeURIComponent(it.name);
-          a.innerHTML = '<span class="card-top"><span class="icon" aria-hidden="true">' + iconFor(it.name.toLowerCase()) + '</span>' +
-            '<h3>' + titleFromFile(it.name) + '</h3></span>' +
+          a.innerHTML = '<h3>' + titleFromFile(it.name) + '</h3>' +
             '<p>Open this tool.</p>' +
             '<span class="open-row"><span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></span></span>';
           grid.appendChild(a);
