@@ -233,7 +233,7 @@ if(!window.pdfjsLib){ $('pdfStatus').textContent='Saved paper needs internet to 
 try{
 let buf=await rec.blob.arrayBuffer(); pdfDoc=await pdfjsLib.getDocument({data:buf}).promise;
 $('pdfEmpty').style.display='none'; $('pdfStatus').textContent=pdfDoc.numPages+' pages · Restored from this browser';
-renderAll();
+await renderAll(); scrollToPaper();
 }catch(err){ $('pdfStatus').textContent='Saved paper could not be reopened.'; }
 }
 function fmtDate(ts){ return new Date(ts).toLocaleString([], {day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}); }
@@ -312,7 +312,7 @@ function closeModal(){ $('modal').classList.remove('open'); }
 function startTimer(){
 totalMs=durationMin*60*1000; endTime=Date.now()+totalMs; startTime=Date.now();
 localStorage.setItem(KEY, JSON.stringify({endTime:endTime, durationMin:durationMin}));
-showRunning(); tick();
+showRunning(); tick(); if(pdfDoc) setTimeout(scrollToPaper,100);
 if(interval) clearInterval(interval); interval=setInterval(tick, 500);
 try{ if(navigator.wakeLock) navigator.wakeLock.request('screen'); }catch(e){}
 }
@@ -347,19 +347,40 @@ if(!window.pdfjsLib){ $('pdfStatus').textContent='PDF viewer needs internet on f
 try{
 let buf=await file.arrayBuffer(); pdfDoc=await pdfjsLib.getDocument({data:buf}).promise;
 $('pdfEmpty').style.display='none'; $('pdfStatus').textContent=pdfDoc.numPages+' pages';
-renderAll();
+await renderAll(); scrollToPaper();
 savePdfCache(file).then(()=>{ $('pdfStatus').textContent=pdfDoc.numPages+' pages · Saved in this browser'; }).catch(()=>{});
 }catch(err){ $('pdfStatus').textContent='Could not open that PDF.'; }
 });
+let rendering=false, renderQueued=false, resizeT=null, lastW=window.innerWidth;
 async function renderAll(){
+if(rendering){ renderQueued=true; return; }
+rendering=true;
+try{
 if(!pdfDoc) return; let wrap=$('pdfWrap'); wrap.innerHTML='';
 for(let i=1;i<=pdfDoc.numPages;i++){
-let page=await pdfDoc.getPage(i); let containerW=wrap.clientWidth||800; let base=page.getViewport({scale:1}); let scale=(containerW-24)/base.width*2; // always top quality let vp=page.getViewport({scale:scale});
+try{
+let page=await pdfDoc.getPage(i); let containerW=wrap.clientWidth||800; let base=page.getViewport({scale:1});
+let scale=(containerW-24)/base.width*2; /* always top quality */
+let vp=page.getViewport({scale:scale});
 let div=document.createElement('div'); div.className='pdfpage'; div.innerHTML='<div class="pagelabel"><span>Page '+i+'</span><span>'+i+' of '+pdfDoc.numPages+'</span></div>';
 let canvas=document.createElement('canvas'); canvas.width=vp.width; canvas.height=vp.height; div.appendChild(canvas); wrap.appendChild(div);
 await page.render({canvasContext:canvas.getContext('2d'), viewport:vp}).promise;
+}catch(err){ /* one bad page must not hide the rest */ }
 }
+}catch(err){ $('pdfStatus').textContent='Could not draw the paper.'; }
+finally{ rendering=false; if(renderQueued){ renderQueued=false; renderAll(); } }
 }
+function scrollToPaper(){
+if(!pdfDoc) return; let wrap=$('pdfWrap'); if(!wrap) return;
+let offset=12; let tb=$('timerBar');
+if(tb && $('timerCard').style.display!=='none') offset=tb.offsetHeight+24;
+let y=wrap.getBoundingClientRect().top+window.scrollY-offset;
+window.scrollTo({top:Math.max(0,y),behavior:'smooth'});
+}
+window.addEventListener('resize', ()=>{
+if(!pdfDoc || window.innerWidth===lastW) return;
+clearTimeout(resizeT); resizeT=setTimeout(()=>{ lastW=window.innerWidth; renderAll(); },300);
+});
 window.addEventListener('beforeunload', e=>{ if(endTime && Date.now()<endTime && !finished){ e.preventDefault(); e.returnValue=''; } });
 (function(){
 try{
