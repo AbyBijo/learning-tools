@@ -545,23 +545,109 @@ await saveSubject(sub); render(); showToast('Topic deleted.');
 }
 
 
-/* Save a chapter as PDF — via the print sheet, so pages flow and nothing is cut */
-function saveChapterPDF(subjectId, chapterId){
+/* Save a chapter as PDF — direct download, no print tab.
+   Built with jsPDF (loaded on demand, first time only): A4, Apple-style,
+   pages flow and topics are kept whole. The print sheet remains only as a
+   fallback if the library cannot load. */
+let jspdfLoading=null;
+function loadJsPDF(){
+if(window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+if(jspdfLoading) return jspdfLoading;
+jspdfLoading=new Promise((res,rej)=>{
+let sc=document.createElement('script');
+sc.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+sc.onload=()=>res(); sc.onerror=()=>rej(new Error('jsPDF failed to load'));
+document.head.appendChild(sc);
+});
+return jspdfLoading;
+}
+function pdfSafeName(name){ return String(name||'').replace(/[\\/:*?"<>|]/g,'-').replace(/\s+/g,' ').trim() || 'Chapter'; }
+function diffColor(v){ return v==='easy' ? [19,115,51] : v==='hard' ? [200,30,30] : [29,29,31]; }
+function impColor(v){ return v==='very' ? [124,45,18] : [29,29,31]; }
+async function saveChapterPDF(subjectId, chapterId){
 let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+try{ await loadJsPDF(); }
+catch(e){
+showToast('PDF needs internet the first time — opening print instead.');
 let html='<div class="print-chapter"><h1>'+esc(ch.name)+'</h1>'
-+'<p class="pline">'+esc(sub.name)+'</p>'
-+'<p class="pline">'+esc(sub.code)+'</p>'
-+'<p class="pline">Difficulty: '+diffLabel(ch.difficulty)+'</p>'
-+'<p class="pline">Importance: '+impLabel(ch.importance)+'</p>';
++'<p class="pline">'+esc(sub.name)+'</p><p class="pline">'+esc(sub.code)+'</p>'
++'<p class="pline">Difficulty: '+diffLabel(ch.difficulty)+'</p><p class="pline">Importance: '+impLabel(ch.importance)+'</p>';
 ch.topics.forEach((t,i)=>{
 html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(t.name)+'</h3>'
 +'<div class="pmeta">Difficulty: '+diffLabel(t.difficulty)+' · Importance: '+impLabel(t.importance)+'</div>'
-+(t.note ? '<div class="pnote">'+esc(t.note)+'</div>' : '<div class="pmeta" style="margin-top:6px">No notes.</div>')
-+'</div>';
++(t.note ? '<div class="pnote">'+esc(t.note)+'</div>' : '<div class="pmeta" style="margin-top:6px">No notes.</div>')+'</div>';
 });
-html+='</div>';
-$('printArea').innerHTML=html;
-window.print();
+html+='</div>'; $('printArea').innerHTML=html; window.print(); return;
+}
+showToast('Making your PDF…');
+let doc=new window.jspdf.jsPDF({unit:'mm', format:'a4'});
+let W=210, H=297, M=20, CW=W-2*M, FOOT=282;
+let y=M;
+const INK=[29,29,31], GREY=[110,110,115], LINE=[226,226,231], LIGHT=[245,245,247];
+function pill(x, baseline, label, color){
+doc.setFont('helvetica','bold'); doc.setFontSize(9);
+let w=doc.getTextWidth(label)+8;
+doc.setFillColor(LIGHT[0],LIGHT[1],LIGHT[2]); doc.setDrawColor(LINE[0],LINE[1],LINE[2]); doc.setLineWidth(0.3);
+doc.roundedRect(x, baseline-4.5, w, 7, 3.5, 3.5, 'FD');
+doc.setTextColor(color[0],color[1],color[2]); doc.text(label, x+4, baseline);
+return w;
+}
+function pillsRow(labels, centreY){
+doc.setFont('helvetica','bold'); doc.setFontSize(9);
+let widths=labels.map(l=>doc.getTextWidth(l.text)+8);
+let total=widths.reduce((a,b)=>a+b,0)+6*(labels.length-1);
+let x=(W-total)/2;
+labels.forEach((l,i)=>{ x+=pill(x, centreY, l.text, l.color); if(i<labels.length-1) x+=6; });
+}
+function need(height){ if(y+height>FOOT-10){ doc.addPage(); y=M; } }
+function footer(){
+let pages=doc.getNumberOfPages();
+for(let i=1;i<=pages;i++){
+doc.setPage(i);
+doc.setDrawColor(LINE[0],LINE[1],LINE[2]); doc.setLineWidth(0.3); doc.line(M, FOOT-6, W-M, FOOT-6);
+doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(GREY[0],GREY[1],GREY[2]);
+doc.text('Made with Compartmentalizer', M, FOOT);
+doc.link(M, FOOT-3.5, doc.getTextWidth('Made with Compartmentalizer'), 5, {url:'https://abybijo.github.io/learning-tools/tools/compartmentalizer.html'});
+doc.setFont('helvetica','bold'); doc.setTextColor(INK[0],INK[1],INK[2]);
+let gh='GitHub'; let gw=doc.getTextWidth(gh);
+doc.text(gh, W-M-gw, FOOT);
+doc.link(W-M-gw, FOOT-3.5, gw, 5, {url:'https://github.com/AbyBijo/learning-tools/blob/main/tools/compartmentalizer.html'});
+doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(GREY[0],GREY[1],GREY[2]);
+doc.text(String(i), W/2, FOOT, {align:'center'});
+}
+}
+/* Header — eyebrow, chapter name, subject + code, chapter pills */
+doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(GREY[0],GREY[1],GREY[2]);
+doc.text('COMPARTMENTALIZER', W/2, y, {align:'center'}); y+=4;
+doc.setDrawColor(LINE[0],LINE[1],LINE[2]); doc.setLineWidth(0.4); doc.line(W/2-12, y, W/2+12, y); y+=13;
+doc.setFont('helvetica','bold'); doc.setFontSize(26); doc.setTextColor(INK[0],INK[1],INK[2]);
+let titleLines=doc.splitTextToSize(ch.name, CW);
+doc.text(titleLines, W/2, y, {align:'center'}); y+=titleLines.length*10+5;
+doc.setFont('helvetica','normal'); doc.setFontSize(13); doc.setTextColor(GREY[0],GREY[1],GREY[2]);
+doc.text(sub.name, W/2, y, {align:'center'}); y+=7;
+if(sub.code){ doc.setFontSize(11); doc.text(sub.code, W/2, y, {align:'center'}); y+=10; } else { y+=3; }
+pillsRow([{text:diffLabel(ch.difficulty), color:diffColor(ch.difficulty)}, {text:impLabel(ch.importance), color:impColor(ch.importance)}], y); y+=14;
+doc.setDrawColor(LINE[0],LINE[1],LINE[2]); doc.setLineWidth(0.4); doc.line(M, y, W-M, y); y+=12;
+/* Topics — numbered, kept whole, flowing across pages */
+ch.topics.forEach((t,i)=>{
+let titleLines=doc.splitTextToSize((i+1)+'. '+t.name, CW);
+let noteLines=t.note ? doc.splitTextToSize(t.note, CW) : ['No notes.'];
+let blockH=titleLines.length*7 + 11 + noteLines.length*6 + 12;
+need(blockH);
+doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(INK[0],INK[1],INK[2]);
+doc.text(titleLines, M, y); y+=titleLines.length*7+1;
+doc.setFont('helvetica','bold'); doc.setFontSize(9);
+let w1=doc.getTextWidth(diffLabel(t.difficulty))+8, w2=doc.getTextWidth(impLabel(t.importance))+8;
+pill(M, y+2, diffLabel(t.difficulty), diffColor(t.difficulty));
+pill(M+w1+6, y+2, impLabel(t.importance), impColor(t.importance));
+y+=11;
+doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(t.note?INK[0]:GREY[0], t.note?INK[1]:GREY[1], t.note?INK[2]:GREY[2]);
+doc.text(noteLines, M, y); y+=noteLines.length*6+4;
+doc.setDrawColor(LINE[0],LINE[1],LINE[2]); doc.setLineWidth(0.3); doc.line(M, y, W-M, y); y+=9;
+});
+footer();
+doc.save(pdfSafeName(sub.name)+' – '+pdfSafeName(ch.name)+'.pdf');
+showToast('PDF downloaded.');
 }
 
 loadAll();
