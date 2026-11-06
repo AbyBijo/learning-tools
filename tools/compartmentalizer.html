@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f5f5f7">
-<meta name="color-scheme" content="light">
+<meta name="color-scheme" content="light dark">
+<script>
+/* Theme before first paint — dark follows the phone on first visit, saved choice after that. */
+try{ let t=localStorage.getItem('compartmentalizerTheme'); if(t==='dark' || (t!=='light' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches)){ document.documentElement.classList.add('dark'); } }catch(e){}
+</script>
 <title>Compartmentalizer</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -15,7 +19,7 @@
 input:focus,textarea:focus,button:focus{outline:none!important;box-shadow:none!important;border-color:#a1a1a6!important}
 ::selection{background:#e5e5ea;color:#1d1d1f}
 *{box-sizing:border-box}
-html{color-scheme:light}
+html{color-scheme:light dark}
 body{margin:0;background:#f5f5f7;color:#1d1d1f;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;text-align:center;-webkit-font-smoothing:antialiased;padding-bottom:64px}
 .wrap{max-width:760px;margin:0 auto;padding:32px 20px 110px}
 .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#86868b;font-weight:600}
@@ -26,16 +30,16 @@ h1{font-size:40px;line-height:1.05;letter-spacing:-.03em;margin:10px 0 8px;font-
 .card{background:#fff;border-radius:20px;padding:24px;margin-top:20px;box-shadow:0 1px 2px rgba(0,0,0,.05);text-align:left}
 h2{font-size:17px;letter-spacing:-.01em;margin:0 0 14px;font-weight:700}
 label{display:block;font-size:12px;font-weight:600;color:#86868b;letter-spacing:.04em;text-transform:uppercase;margin:14px 0 6px;text-align:left}
-input[type=text],input[type=number]{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;border-radius:12px;padding:13px 14px;font-size:15px;font-family:Inter,sans-serif}
+input[type=text],input[type=number],input[type=search]{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;border-radius:12px;padding:13px 14px;font-size:15px;font-family:Inter,sans-serif}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:560px){.grid2{grid-template-columns:1fr}h1{font-size:32px}}
 .btn{border:0;border-radius:12px;padding:15px 18px;font-size:15px;font-weight:700;cursor:pointer;background:#1d1d1f;color:#fff;font-family:Inter,sans-serif;width:100%}
 .btn.sec{background:#f5f5f7;color:#1d1d1f;border:1px solid #e2e2e7}
 .btn.danger{background:#fff;color:#c81e1e;border:1px solid #f0c6c6}
 .btn:active{transform:scale(.99)}
-.smallbtn{border:1px solid #e2e2e7;background:#fff;color:#1d1d1f;border-radius:999px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif}
+.smallbtn{border:1px solid #e2e2e7;background:#fff;color:#1d1d1f;border-radius:999px;padding:11px 16px;min-height:44px;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif}
 .smallbtn.danger{color:#c81e1e;border-color:#f0c6c6}
-.back{border:0;background:transparent;color:#0071e3;font-size:15px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;padding:4px 0;text-align:left}
+.back{border:0;background:transparent;color:#0071e3;font-size:15px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;padding:10px 0;min-height:44px;text-align:left}
 .codepill{display:inline-block;background:#f5f5f7;border:1px solid #e2e2e7;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600;color:#6e6e73;margin-top:6px}
 /* Subject tiles — full-width, lengthwise */
 .subj-tile{background:#fff;border-radius:20px;padding:20px 22px;margin-top:14px;box-shadow:0 1px 2px rgba(0,0,0,.05);display:flex;justify-content:space-between;align-items:center;gap:12px;cursor:pointer;text-align:left;transition:transform .15s ease,box-shadow .15s ease}
@@ -46,7 +50,11 @@ input[type=text],input[type=number]{width:100%;background:#f5f5f7;border:1px sol
 /* Subject / chapter page header */
 .pagehead{position:relative;text-align:center;padding:8px 44px 0}
 .pagehead h2{font-size:28px;letter-spacing:-.02em;margin:0}
-.editbtn{position:absolute;top:0;right:0;width:38px;height:38px;border-radius:50%;border:1px solid #e2e2e7;background:#fff;color:#1d1d1f;cursor:pointer;display:grid;place-items:center;font-family:Inter,sans-serif}
+header{position:relative}
+.themebtn{position:absolute;top:0;right:0;width:44px;height:44px;border-radius:50%;border:1px solid #e2e2e7;background:#fff;color:#1d1d1f;cursor:pointer;display:grid;place-items:center;font-family:Inter,sans-serif}
+.themebtn svg{width:20px;height:20px}
+.themebtn .sun{display:none}
+.editbtn{position:absolute;top:0;right:0;width:44px;height:44px;border-radius:50%;border:1px solid #e2e2e7;background:#fff;color:#1d1d1f;cursor:pointer;display:grid;place-items:center;font-family:Inter,sans-serif}
 .editbtn svg{width:17px;height:17px}
 .overview{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:20px}
 @media(max-width:560px){.overview{grid-template-columns:repeat(2,1fr)}}
@@ -73,13 +81,13 @@ textarea{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;bo
 .topic.dragging{opacity:.92;box-shadow:0 12px 28px rgba(0,0,0,.18);z-index:5;position:relative;transition:none}
 .topic.drop-before{border-top:2px solid #1d1d1f}
 .topic.drop-after{border-bottom:2px solid #1d1d1f}
-.handle{touch-action:none;cursor:grab;color:#a1a1a6;font-size:18px;padding:6px 4px;flex-shrink:0;user-select:none;-webkit-user-select:none}
+.handle{touch-action:none;cursor:grab;color:#a1a1a6;font-size:18px;padding:10px 8px;min-height:44px;display:flex;align-items:center;flex-shrink:0;user-select:none;-webkit-user-select:none}
 .handle:active{cursor:grabbing}
 .topic .name{font-size:15px;font-weight:600;text-align:left;line-height:1.4}
-.del{border:0;background:transparent;color:#c81e1e;font-size:18px;cursor:pointer;padding:6px;flex-shrink:0}
+.del{border:0;background:transparent;color:#c81e1e;font-size:18px;cursor:pointer;padding:10px 12px;min-height:44px;flex-shrink:0}
 /* Chapter tabs — Topics / Questions capsule */
 .tabs{display:flex;gap:3px;background:#e8e8ed;border-radius:12px;padding:3px;margin-top:20px}
-.tab{flex:1;border:0;background:transparent;color:#6e6e73;padding:10px 8px;border-radius:9px;font-weight:600;font-size:15px;cursor:pointer;font-family:Inter,sans-serif;transition:background .2s ease,color .2s ease,box-shadow .2s ease}
+.tab{flex:1;border:0;background:transparent;color:#6e6e73;padding:12px 8px;min-height:44px;border-radius:9px;font-weight:600;font-size:15px;cursor:pointer;font-family:Inter,sans-serif;transition:background .2s ease,color .2s ease,box-shadow .2s ease}
 .tab.on{background:#fff;color:#1d1d1f;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tab:active{transform:scale(.98)}
 .listfade{animation:fadein .25s ease}
@@ -134,7 +142,7 @@ body.home-view .fab{bottom:122px}
 .dd-menu{position:absolute;top:calc(100% + 6px);left:0;right:0;min-width:180px;background:#fff;border:1px solid #e2e2e7;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.16);padding:6px;display:none;z-index:30;animation:dropin .18s ease}
 .dd.open .dd-menu{display:block}
 @keyframes dropin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-.dd-opt{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:transparent;color:#1d1d1f;padding:11px 12px;border-radius:9px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;text-align:left}
+.dd-opt{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:transparent;color:#1d1d1f;padding:13px 12px;min-height:44px;border-radius:9px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;text-align:left}
 .dd-opt:hover{background:#f5f5f7}
 .dd-opt .tick{color:#1d1d1f;font-weight:800}
 .dd-btn.diff-easy{color:#137333}
@@ -143,6 +151,13 @@ body.home-view .fab{bottom:122px}
 /* Custom toast — no native alert anywhere */
 #toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:28px;background:#1d1d1f;color:#fff;padding:13px 20px;border-radius:999px;font-weight:600;font-size:14px;z-index:80;box-shadow:0 12px 32px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;max-width:92vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.has-undo{pointer-events:auto}
+#toast .undo-btn{border:0;background:transparent;color:#64d2ff;font-weight:800;font-size:14px;cursor:pointer;font-family:Inter,sans-serif;margin-left:12px;padding:6px 4px}
+#toast .undo-btn:active{transform:scale(.96)}
+/* Search + backup card — home page */
+.searchwrap{margin-top:20px}
+.searchwrap input{margin:0}
+.mut{color:#86868b;font-size:13px;line-height:1.5}
 
 /* Save as PDF — print only. Flowing pages, topics kept whole, footer repeats on every page. */
 #printArea{display:none}
@@ -166,8 +181,8 @@ html,body{background:#fff}
 
 /* Resources */
 .res-url{font-size:12px;color:#86868b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;margin-top:6px}
-.linkbtn{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid #e2e2e7;background:#f5f5f7;color:#1d1d1f;cursor:pointer;display:grid;place-items:center;font-family:Inter,sans-serif}
-.linkbtn svg{width:16px;height:16px}
+.linkbtn{flex:none;width:44px;height:44px;border-radius:50%;border:1px solid #e2e2e7;background:#f5f5f7;color:#1d1d1f;cursor:pointer;display:grid;place-items:center;font-family:Inter,sans-serif}
+.linkbtn svg{width:18px;height:18px}
 .linkbtn:active{transform:scale(.94)}
 .embed-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;margin-top:10px}
 .embed-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
@@ -180,6 +195,46 @@ html,body{background:#fff}
 .opthead label{margin:0}
 .optfield.off{opacity:.45}
 .optfield.off input,.optfield.off textarea,.optfield.off .dd{pointer-events:none}
+
+/* Reduced motion — the phone's setting wins over the animations */
+@media (prefers-reduced-motion: reduce){
+*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+/* Dark mode — follows the phone on first visit, toggle in the header, saved in this browser */
+html.dark body{background:#000;color:#f5f5f7}
+html.dark .card,html.dark .subj-tile,html.dark .chapter-row,html.dark .topic,html.dark .qrow,html.dark .stat,html.dark .modalbox,html.dark .dd-menu,html.dark .dd-btn.pill,html.dark .editbtn,html.dark .smallbtn,html.dark .linkbtn,html.dark .explore,html.dark .site-footer,html.dark .embed-page{background:#1c1c1e;border-color:#38383a;color:#f5f5f7}
+html.dark .dd-btn,html.dark input[type=text],html.dark input[type=number],html.dark input[type=search],html.dark textarea,html.dark .view-note,html.dark .pill,html.dark .codepill,html.dark .dist-part{background:#2c2c2e;border-color:#38383a;color:#f5f5f7}
+html.dark .saved,html.dark .sub,html.dark .eyebrow,html.dark .empty,html.dark .mut,html.dark .stat span,html.dark .subj-tile .meta,html.dark .chapter-meta .count,html.dark .note-preview,html.dark .res-url,html.dark .optrow span,html.dark .modalbox p,html.dark .distline,html.dark .section-label,html.dark .site-footer,html.dark .chev,html.dark label{color:#98989d}
+html.dark .saved b,html.dark .site-footer b,html.dark .site-footer a{color:#f5f5f7}
+html.dark .tabs{background:#2c2c2e}
+html.dark .tab{color:#98989d}
+html.dark .tab.on{background:#48484a;color:#f5f5f7}
+html.dark .btn{background:#f5f5f7;color:#1d1d1f}
+html.dark .btn.sec{background:#2c2c2e;color:#f5f5f7;border-color:#38383a}
+html.dark .btn.danger{background:#1c1c1e;color:#ff6961;border-color:#5c2b29}
+html.dark .smallbtn.danger{color:#ff6961;border-color:#5c2b29}
+html.dark .fab{background:#f5f5f7;color:#1d1d1f}
+html.dark #toast{background:#f5f5f7;color:#1d1d1f}
+html.dark .switch{background:#48484a}
+html.dark .switch.on{background:#34c759}
+html.dark .optrow{border-color:#38383a}
+html.dark .explore,html.dark .site-footer{border-top-color:#38383a}
+html.dark .explore span:last-child{color:#0a84ff}
+html.dark .back{color:#0a84ff}
+html.dark .dd-opt:hover{background:#2c2c2e}
+html.dark .dd-opt .tick{color:#f5f5f7}
+html.dark .topic.drop-before{border-top-color:#f5f5f7}
+html.dark .topic.drop-after{border-bottom-color:#f5f5f7}
+html.dark .dist-err{color:#ff6961}
+html.dark .del{color:#ff6961}
+html.dark .pill.diff-easy,html.dark .dd-btn.diff-easy{color:#4ade80}
+html.dark .pill.diff-hard,html.dark .dd-btn.diff-hard{color:#ff6961}
+html.dark .pill.imp-very,html.dark .dd-btn.imp-very{color:#fda4af}
+html.dark ::selection{background:#48484a;color:#f5f5f7}
+html.dark .themebtn{border-color:#38383a;background:#1c1c1e;color:#f5f5f7}
+html.dark .themebtn .moon{display:none}
+html.dark .themebtn .sun{display:block}
 
 /* Explore more tools + personal footer — home page only */
 .explore{position:fixed;left:0;right:0;bottom:48px;z-index:30;display:flex;justify-content:space-between;align-items:center;background:#fff;border-top:1px solid #d2d2d7;padding:18px 22px;color:#1d1d1f;text-decoration:none;font-weight:700;font-size:16px}
@@ -198,6 +253,7 @@ html,body{background:#fff}
 <h1>Compartmentalizer</h1>
 <p class="sub">Subjects, Chapters, Topic</p>
 <p class="saved"><b>● Saved in this browser</b></p>
+<button class="themebtn" id="themeBtn" onclick="toggleTheme()" aria-label="Switch to dark mode"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
 </header>
 
 <div id="viewMain"></div>
@@ -212,14 +268,14 @@ html,body{background:#fff}
 
 <div id="toast" role="status"></div>
 
-<div class="modal" id="formModal"><div class="modalbox">
+<div class="modal" id="formModal" role="dialog" aria-modal="true" aria-labelledby="formTitle"><div class="modalbox">
 <h2 id="formTitle"></h2>
 <div id="formBody"></div>
 <div class="row"><button class="btn sec" onclick="closeForm()">Cancel</button><button class="btn" id="formPrimary" onclick="submitForm()">Add</button></div>
 <div id="formExtra"></div>
 </div></div>
 
-<div class="modal" id="modal"><div class="modalbox">
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modalbox">
 <h2 id="modalTitle">Delete?</h2>
 <p id="modalText" class="center"></p>
 <div class="row"><button class="btn sec" onclick="closeModal()">Cancel</button><button class="btn danger" id="modalConfirm">Delete</button></div>
@@ -228,8 +284,22 @@ html,body{background:#fff}
 <script>
 const DB_NAME='ChapterManagerDB', STORE='subjects', LS_FALLBACK='chapterManagerFallbackV1';
 let db=null, idbReady=false;
-let state={subjects:[], view:'main', subjectId:null, chapterId:null, chapterTab:'topics', subjectTab:'chapters'};
+let state={subjects:[], view:'main', subjectId:null, chapterId:null, chapterTab:'topics', subjectTab:'chapters', search:''};
 function $(id){return document.getElementById(id);}
+
+/* Dark mode — the toggle in the header, saved in this browser. On a first visit
+   the phone's own setting is used (see the small script in <head>). */
+const THEME_KEY='compartmentalizerTheme';
+function applyThemeMeta(){
+let dark=document.documentElement.classList.contains('dark');
+let m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content', dark?'#000000':'#f5f5f7');
+let b=$('themeBtn'); if(b) b.setAttribute('aria-label', dark?'Switch to light mode':'Switch to dark mode');
+}
+function toggleTheme(){
+let dark=document.documentElement.classList.toggle('dark');
+try{ localStorage.setItem(THEME_KEY, dark?'dark':'light'); }catch(e){}
+applyThemeMeta();
+}
 function uid(){return 'id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7);}
 function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function fmtDur(min){ if(min<60) return min+'m'; let h=Math.floor(min/60), m=min%60; return m? h+'h '+m+'m' : h+'h'; }
@@ -340,6 +410,7 @@ ch.resources=ch.resources.map(r=>({name:'', content:'', url:'', ...r, name:(r.na
 if(migrated && idbReady){ for(let sub of state.subjects) await idbPut(sub); }
 let reopenTopic=restorePlace();
 render();
+applyThemeMeta();
 if(reopenTopic) openTopicPopup(null, state.subjectId, state.chapterId, reopenTopic);
 }
 async function saveSubject(sub){
@@ -350,8 +421,86 @@ async function deleteSubjectFromStore(id){
 if(idbReady){ await idbDel(id); }
 else { try{ localStorage.setItem(LS_FALLBACK, JSON.stringify(state.subjects)); }catch(e){} }
 }
+
+/* Backup — everything lives in this browser, so a backup file is the safety net.
+   Export downloads all subjects as one JSON file; Import replaces everything
+   with the backup file, after a confirmation. */
+function exportData(){
+let data={app:'compartmentalizer', version:1, exportedAt:new Date().toISOString(), subjects:state.subjects};
+let blob=new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+let a=document.createElement('a');
+let d=new Date(); let stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+a.href=URL.createObjectURL(blob); a.download='compartmentalizer-backup-'+stamp+'.json';
+document.body.appendChild(a); a.click(); a.remove();
+setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+showToast('Backup downloaded.');
+}
+function importData(){ let f=$('importFile'); if(f) f.click(); }
+function parseBackup(text){
+let data=null;
+try{ data=JSON.parse(text); }catch(e){ return null; }
+let list=Array.isArray(data) ? data : (data && Array.isArray(data.subjects) ? data.subjects : null);
+if(!list || !list.every(x=>x && typeof x.name==='string' && Array.isArray(x.chapters))) return null;
+return list;
+}
+function normalizeImportedSubject(x){
+let sub={id:(typeof x.id==='string' && x.id) ? x.id : uid(), name:String(x.name||'Untitled'), code:String(x.code||''), durationMin:(x.durationMin==null?null:x.durationMin), maxMarks:(x.maxMarks==null?null:x.maxMarks), dist:normalizeDist(x.dist), topics:[], resources:[], chapters:[]};
+function normTopic(t){ return {id:(t.id||uid()), name:String(t.name||''), difficulty:['easy','medium','hard'].includes(t.difficulty)?t.difficulty:'medium', importance:['less','important','very'].includes(t.importance)?t.importance:'important', note:String(t.note||'')}; }
+function normRes(r){ return {id:(r.id||uid()), name:String(r.name||''), content:String(r.content||''), url:String(r.url||'')}; }
+sub.topics=(Array.isArray(x.topics)?x.topics:[]).map(normTopic);
+sub.resources=(Array.isArray(x.resources)?x.resources:[]).map(normRes);
+sub.chapters=(Array.isArray(x.chapters)?x.chapters:[]).map(c=>({id:(c.id||uid()), name:String(c.name||''), difficulty:['easy','medium','hard'].includes(c.difficulty)?c.difficulty:'medium', importance:['less','important','very'].includes(c.importance)?c.importance:'important', topics:(Array.isArray(c.topics)?c.topics:[]).map(normTopic), questions:(Array.isArray(c.questions)?c.questions:[]).map(q=>({id:(q.id||uid()), text:String(q.text||''), part:['A','B','C'].includes(q.part)?q.part:'A', cat:['K','U','A','AN'].includes(q.cat)?q.cat:'K', answer:String(q.answer||'')})), resources:(Array.isArray(c.resources)?c.resources:[]).map(normRes)}));
+return sub;
+}
+async function importFileChanged(e){
+let file=e.target.files && e.target.files[0];
+e.target.value='';
+if(!file) return;
+let text='';
+try{ text=await file.text(); }catch(err){ showToast('Could not read that file.'); return; }
+let list=parseBackup(text);
+if(!list){ showToast('That file is not a Compartmentalizer backup.'); return; }
+askDelete('Import backup?', 'This will replace all your subjects with the backup file.', async ()=>{
+state.subjects=list.map(normalizeImportedSubject);
+for(let s of state.subjects) await saveSubject(s);
+if(idbReady){ let old=await idbAll(); for(let o of old){ if(!state.subjects.find(x=>x.id===o.id)) await idbDel(o.id); } }
+else { try{ localStorage.setItem(LS_FALLBACK, JSON.stringify(state.subjects)); }catch(err){} }
+goMain(); showToast('Backup imported.');
+});
+}
 let toastTimer=null;
-function showToast(msg){ let t=$('toast'); if(!t) return; t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
+function showToast(msg, undoFn){
+let t=$('toast'); if(!t) return;
+t.textContent=msg;
+if(undoFn){
+let b=document.createElement('button'); b.type='button'; b.className='undo-btn'; b.textContent='Undo';
+b.onclick=()=>{ hideToast(); undoFn(); };
+t.appendChild(b); t.classList.add('has-undo');
+} else { t.classList.remove('has-undo'); }
+t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>hideToast(), undoFn?6000:2600);
+}
+function hideToast(){ let t=$('toast'); if(!t) return; t.classList.remove('show'); t.classList.remove('has-undo'); }
+
+/* Undo — every delete keeps what was removed (and where it was) until the
+   toast goes away, so one wrong tap can be taken back. */
+let lastUndo=null;
+function undoDelete(){
+if(!lastUndo) return;
+let u=lastUndo; lastUndo=null;
+if(u.kind==='subject'){ state.subjects.splice(Math.min(u.index, state.subjects.length), 0, u.item); saveSubject(u.item); }
+else {
+let sub=findSubject(u.subjectId); if(!sub) return;
+let list=null;
+if(u.kind==='chapter') list=sub.chapters;
+else if(u.kind==='topic') list=topicList(sub, u.chapterId);
+else if(u.kind==='question'){ let ch=findChapter(sub, u.chapterId); list=ch ? (ch.questions||(ch.questions=[])) : null; }
+else if(u.kind==='resource') list=resourceList(sub, u.chapterId);
+if(!list) return;
+list.splice(Math.min(u.index, list.length), 0, u.item);
+saveSubject(sub);
+}
+render(); showToast('Restored.');
+}
 function closeAllDropdowns(){ document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')); }
 const DIFF_OPTS=[{v:'easy',l:'Easy'},{v:'medium',l:'Medium'},{v:'hard',l:'Hard'}];
 const IMP_OPTS=[{v:'less',l:'Less important'},{v:'important',l:'Important'},{v:'very',l:'Very important'}];
@@ -390,9 +539,11 @@ let out={A:[],B:[],C:[]};
 return out;
 }
 const PDF_OPTS_KEY='compartmentalizerPdfOptsV1';
-let pdfOpts={details:true, questions:true, answers:false, subjectTopics:true, resources:true};
-try{ let saved=JSON.parse(localStorage.getItem(PDF_OPTS_KEY)||'null'); if(saved) pdfOpts={details:true, questions:true, answers:false, subjectTopics:true, resources:true, ...saved}; }catch(e){}
+const PDF_OPTS_BASE={details:true, resources:true, questions:true, answers:false, chapters:true, chTopics:true, chQuestions:true, chResources:true, subjectTopics:true, subjectResources:true};
+let pdfOpts={...PDF_OPTS_BASE};
+try{ let saved=JSON.parse(localStorage.getItem(PDF_OPTS_KEY)||'null'); if(saved) pdfOpts={...PDF_OPTS_BASE, ...saved}; }catch(e){}
 function savePdfOpts(){ try{ localStorage.setItem(PDF_OPTS_KEY, JSON.stringify(pdfOpts)); }catch(e){} }
+let pdfOptionsIsSubject=false;
 function ddHTML(kind, value, opts, extra, btnClass){
 let cur=opts.find(o=>String(o.v)===String(value))||opts[0];
 let menu=opts.map(o=>'<button type="button" class="dd-opt" data-value="'+o.v+'"><span>'+o.l+'</span><span class="tick">'+(String(o.v)===String(value)?'✓':'')+'</span></button>').join('');
@@ -425,6 +576,26 @@ closeAllDropdowns(); return;
 if(!e.target.closest('.dd')) closeAllDropdowns();
 });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeAllDropdowns(); closeFormKeep(); } });
+/* Keyboard support for the custom dropdowns — Down opens and moves, Up moves,
+   Escape closes and returns focus to the button. Enter and Space already work:
+   the options are real buttons, so they fire a click. */
+document.addEventListener('keydown', e=>{
+let btn=e.target.closest && e.target.closest('.dd-btn');
+if(btn && e.key==='ArrowDown'){
+e.preventDefault();
+let dd=btn.closest('.dd'); let was=dd.classList.contains('open'); closeAllDropdowns();
+if(!was){ dd.classList.add('open'); let first=dd.querySelector('.dd-opt'); if(first) first.focus(); }
+return;
+}
+let opt=e.target.closest && e.target.closest('.dd-opt');
+if(opt){
+let dd=opt.closest('.dd'); let opts=[...dd.querySelectorAll('.dd-opt')];
+let i=opts.indexOf(opt);
+if(e.key==='ArrowDown'){ e.preventDefault(); let n=opts[(i+1)%opts.length]; if(n) n.focus(); }
+else if(e.key==='ArrowUp'){ e.preventDefault(); let p=opts[(i-1+opts.length)%opts.length]; if(p) p.focus(); }
+else if(e.key==='Escape'){ e.preventDefault(); closeAllDropdowns(); let b=dd.querySelector('.dd-btn'); if(b) b.focus(); }
+}
+});
 
 /* Delete pop-up (custom) */
 let confirmAction=null;
@@ -522,9 +693,28 @@ if(state.view==='main') renderMain();
 else if(state.view==='subject') renderSubject();
 else if(state.view==='chapter') renderChapter();
 }
+function subjectMatches(sub, q){
+q=String(q||'').trim().toLowerCase(); if(!q) return true;
+let hay=[sub.name, sub.code];
+sub.chapters.forEach(c=>{ hay.push(c.name); (c.topics||[]).forEach(t=>hay.push(t.name)); (c.questions||[]).forEach(x=>hay.push(x.text)); (c.resources||[]).forEach(r=>hay.push(r.name)); });
+(sub.topics||[]).forEach(t=>hay.push(t.name));
+(sub.resources||[]).forEach(r=>hay.push(r.name));
+return hay.some(h=>String(h||'').toLowerCase().indexOf(q)>=0);
+}
+function applySearch(){
+let q=state.search||'';
+let tiles=document.querySelectorAll('.subj-tile'); let shown=0;
+tiles.forEach(t=>{
+let sub=findSubject(t.dataset.subject); let ok=sub && subjectMatches(sub, q);
+t.style.display=ok?'':'none'; if(ok) shown++;
+});
+let empty=$('searchEmpty'); if(empty) empty.style.display=(tiles.length && !shown)?'block':'none';
+}
+function onSearch(v){ state.search=v; applySearch(); }
 function renderMain(){
 let w=$('viewMain');
-let html='<div style="text-align:left;margin-top:26px"><h2 style="margin:0">Subjects</h2></div>';
+let html='<div style="text-align:left;margin-top:26px"><h2 style="margin:0">Subjects</h2></div>'
++'<div class="searchwrap"><input type="search" id="searchInput" placeholder="Search subjects, chapters, topics…" value="'+esc(state.search||'')+'" oninput="onSearch(this.value)" aria-label="Search subjects"></div>';
 if(!state.subjects.length){
 html+='<div class="card" style="text-align:center"><p class="empty" style="margin:0">No subjects yet.<br>Tap + below to add your first subject.</p></div>';
 } else {
@@ -532,12 +722,15 @@ state.subjects.forEach(sub=>{
 let totalTopics=sub.chapters.reduce((n,c)=>n+c.topics.length,0)+(sub.topics||[]).length;
 let totalQuestions=sub.chapters.reduce((n,c)=>n+(c.questions||[]).length,0);
 let totalResources=(sub.resources||[]).length+sub.chapters.reduce((n,c)=>n+(c.resources||[]).length,0);
-html+='<div class="subj-tile" onclick="openSubject(\''+sub.id+'\')"><div><h3>'+esc(sub.name)+'</h3>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')+'<div class="meta">'+sub.chapters.length+' chapter'+(sub.chapters.length===1?'':'s')+' · '+totalTopics+' topic'+(totalTopics===1?'':'s')+' · '+totalQuestions+' question'+(totalQuestions===1?'':'s')+' · '+totalResources+' resource'+(totalResources===1?'':'s')+'</div></div><span class="chev">›</span></div>';
+html+='<div class="subj-tile" data-subject="'+sub.id+'" onclick="openSubject(\''+sub.id+'\')"><div><h3>'+esc(sub.name)+'</h3>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')+'<div class="meta">'+sub.chapters.length+' chapter'+(sub.chapters.length===1?'':'s')+' · '+totalTopics+' topic'+(totalTopics===1?'':'s')+' · '+totalQuestions+' question'+(totalQuestions===1?'':'s')+' · '+totalResources+' resource'+(totalResources===1?'':'s')+'</div></div><span class="chev">›</span></div>';
 });
 }
-html+='<a class="explore" href="https://abybijo.github.io/learning-tools/"><span>Explore more tools</span><span>→</span></a>'
+html+='<div class="card" id="searchEmpty" style="display:none;text-align:center"><p class="empty" style="margin:0">No subjects match that search.</p></div>'
++'<div class="card"><h2 style="margin-bottom:6px">Your data</h2><p class="mut" style="margin:0 0 12px">Everything is saved in this browser. Export a backup file to keep a copy, or import one to restore it.</p><div class="row" style="margin-top:0"><button class="btn sec" onclick="exportData()">Export backup</button><button class="btn sec" onclick="importData()">Import backup</button></div><input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importFileChanged(event)"></div>'
++'<a class="explore" href="https://abybijo.github.io/learning-tools/"><span>Explore more tools</span><span>→</span></a>'
 +'<footer class="site-footer"><b>Aby Bijo</b><a href="https://github.com/AbyBijo"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.15c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.11-.74.4-1.25.72-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 1.67.41.35.77 1.05.77 2.12v3.15c0 .3.21.67.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>GitHub</a><a href="https://www.linkedin.com/in/aby-bijo-102359282"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>LinkedIn</a></footer>';
 w.innerHTML=html;
+applySearch();
 }
 function renderSubject(){
 let sub=findSubject(state.subjectId); if(!sub){ goMain(); return; }
@@ -551,7 +744,7 @@ let html='<div style="text-align:left"><button class="back" onclick="goMain()">�
 +'<div class="stat"><b>'+sub.chapters.length+'</b><span>Chapters</span></div><div class="stat"><b>'+totalTopics+'</b><span>Topics</span></div></div>'
 +(sub.dist && anyDist(sub.dist) ? '<div class="distline">'+esc(distLine(sub.dist))+'</div>' : '')
 +'<div style="margin-top:16px"><button class="btn" onclick="saveSubjectPDF(\''+sub.id+'\')">Save subject as PDF</button></div>'
-+'<div class="tabs"><button class="tab'+(state.subjectTab==='chapters'?' on':'')+'" onclick="switchSubjectTab(\'chapters\')">Chapters</button><button class="tab'+(state.subjectTab==='topics'?' on':'')+'" onclick="switchSubjectTab(\'topics\')">Topics</button><button class="tab'+(state.subjectTab==='resources'?' on':'')+'" onclick="switchSubjectTab(\'resources\')">Resources</button></div>';
++'<div class="tabs" role="tablist"><button class="tab'+(state.subjectTab==='chapters'?' on':'')+'" role="tab" aria-selected="'+(state.subjectTab==='chapters'?'true':'false')+'" onclick="switchSubjectTab(\'chapters\')">Chapters</button><button class="tab'+(state.subjectTab==='topics'?' on':'')+'" role="tab" aria-selected="'+(state.subjectTab==='topics'?'true':'false')+'" onclick="switchSubjectTab(\'topics\')">Topics</button><button class="tab'+(state.subjectTab==='resources'?' on':'')+'" role="tab" aria-selected="'+(state.subjectTab==='resources'?'true':'false')+'" onclick="switchSubjectTab(\'resources\')">Resources</button></div>';
 if(state.subjectTab==='resources'){
 if(!(sub.resources||[]).length){
 html+='<div class="card listfade" style="text-align:center"><p class="empty" style="margin:0">No resources yet.<br>Tap + below to add your first resource.</p></div>';
@@ -584,7 +777,7 @@ bindDrag();
 function topicRowHTML(sub, ch, t){
 let preview=notePreview(t.note);
 return '<div class="topic" data-topic="'+t.id+'" data-chapter="'+(ch?ch.id:'')+'" data-subject="'+sub.id+'" onclick="openTopicPopup(event,\''+sub.id+'\',\''+(ch?ch.id:'')+'\',\''+t.id+'\')">'
-+'<span class="handle" data-drag="'+t.id+'" title="Drag to reorder">⠿</span>'
++'<span class="handle" data-drag="'+t.id+'" title="Drag to reorder" aria-label="Drag to reorder">⠿</span>'
 +'<div class="topic-main"><div class="name">'+esc(t.name)+'</div>'
 +'<div class="topic-meta"><span class="pill diff-'+t.difficulty+'">'+diffLabel(t.difficulty)+'</span><span class="pill imp-'+t.importance+'">'+impLabel(t.importance)+'</span>'+(preview?'<span class="note-preview">'+esc(preview)+'</span>':'')+'</div></div></div>';
 }
@@ -610,7 +803,7 @@ let html='<div style="text-align:left"><button class="back" onclick="goSubject()
 +'<div class="pagehead"><h2>'+esc(ch.name)+'</h2>'
 +'<button class="editbtn" onclick="openEditChapter(\''+sub.id+'\',\''+ch.id+'\')" aria-label="Edit chapter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button></div>'
 +'<div class="chapter-meta" style="justify-content:center;margin-top:12px"><span class="pill diff-'+ch.difficulty+'">'+diffLabel(ch.difficulty)+'</span><span class="pill imp-'+ch.importance+'">'+impLabel(ch.importance)+'</span><span class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+' · '+qCount+' question'+(qCount===1?'':'s')+' · '+rCount+' resource'+(rCount===1?'':'s')+'</span></div>'
-+'<div class="tabs"><button class="tab'+(state.chapterTab==='topics'?' on':'')+'" onclick="switchChapterTab(\'topics\')">Topics</button><button class="tab'+(state.chapterTab==='questions'?' on':'')+'" onclick="switchChapterTab(\'questions\')">Questions</button><button class="tab'+(state.chapterTab==='resources'?' on':'')+'" onclick="switchChapterTab(\'resources\')">Resources</button></div>';
++'<div class="tabs" role="tablist"><button class="tab'+(state.chapterTab==='topics'?' on':'')+'" role="tab" aria-selected="'+(state.chapterTab==='topics'?'true':'false')+'" onclick="switchChapterTab(\'topics\')">Topics</button><button class="tab'+(state.chapterTab==='questions'?' on':'')+'" role="tab" aria-selected="'+(state.chapterTab==='questions'?'true':'false')+'" onclick="switchChapterTab(\'questions\')">Questions</button><button class="tab'+(state.chapterTab==='resources'?' on':'')+'" role="tab" aria-selected="'+(state.chapterTab==='resources'?'true':'false')+'" onclick="switchChapterTab(\'resources\')">Resources</button></div>';
 if(state.chapterTab==='resources'){
 if(!rCount){
 html+='<div class="card listfade" style="text-align:center"><p class="empty" style="margin:0">No resources yet.<br>Tap + below to add your first resource.</p></div>';
@@ -708,11 +901,11 @@ t[field]=value; await saveSubject(sub);
    distribution either. */
 let subFieldToggles={code:true, dur:true, marks:true};
 function optFieldHTML(field, labelText, innerHTML){
-return '<div class="optfield'+(subFieldToggles[field]?'':' off')+'" id="optWrap'+field[0].toUpperCase()+field.slice(1)+'"><div class="opthead"><label>'+labelText+'</label><button type="button" class="switch'+(subFieldToggles[field]?' on':'')+'" data-opt="'+field+'" onclick="toggleSubField(\''+field+'\')"></button></div>'+innerHTML+'</div>';
+return '<div class="optfield'+(subFieldToggles[field]?'':' off')+'" id="optWrap'+field[0].toUpperCase()+field.slice(1)+'"><div class="opthead"><label>'+labelText+'</label><button type="button" class="switch'+(subFieldToggles[field]?' on':'')+'" role="switch" aria-checked="'+(subFieldToggles[field]?'true':'false')+'" aria-label="'+labelText+'" data-opt="'+field+'" onclick="toggleSubField(\''+field+'\')"></button></div>'+innerHTML+'</div>';
 }
 function setSubFieldToggle(field, on){
 subFieldToggles[field]=!!on;
-let sw=document.querySelector('.switch[data-opt="'+field+'"]'); if(sw) sw.classList.toggle('on', !!on);
+let sw=document.querySelector('.switch[data-opt="'+field+'"]'); if(sw){ sw.classList.toggle('on', !!on); sw.setAttribute('aria-checked', on?'true':'false'); }
 let wrap=$('optWrap'+field[0].toUpperCase()+field.slice(1)); if(wrap) wrap.classList.toggle('off', !on);
 if(field==='marks') updateDistSummary();
 }
@@ -903,8 +1096,10 @@ let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapter
 let q=(ch.questions||[]).find(x=>x.id===questionId); if(!q) return;
 let short=q.text.length>60 ? q.text.slice(0,60)+'…' : q.text;
 askDelete('Delete question?', '"'+short+'" will be removed.', async ()=>{
-ch.questions=ch.questions.filter(x=>x.id!==questionId);
-await saveSubject(sub); render(); showToast('Question deleted.');
+let i=(ch.questions||[]).findIndex(x=>x.id===questionId);
+lastUndo={kind:'question', subjectId:subjectId, chapterId:chapterId, index:i, item:q};
+ch.questions=(ch.questions||[]).filter(x=>x.id!==questionId);
+await saveSubject(sub); render(); showToast('Question deleted.', undoDelete);
 });
 }
 
@@ -961,19 +1156,23 @@ await saveSubject(sub); closeForm(); showToast('Chapter saved.'); render();
 function deleteSubject(id){
 let sub=findSubject(id); if(!sub) return;
 askDelete('Delete subject?', '"'+sub.name+'" and all its chapters, topics, questions and resources will be removed.', async ()=>{
-state.subjects=state.subjects.filter(s=>s.id!==id);
+let i=state.subjects.findIndex(x=>x.id===id);
+lastUndo={kind:'subject', index:i, item:sub};
+state.subjects=state.subjects.filter(x=>x.id!==id);
 await deleteSubjectFromStore(id);
 if(state.subjectId===id) goMain(); else render();
-showToast('Subject deleted.');
+showToast('Subject deleted.', undoDelete);
 });
 }
 function deleteChapter(subjectId, chapterId){
 let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
 askDelete('Delete chapter?', '"'+ch.name+'" and all its topics, questions and resources will be removed.', async ()=>{
+let i=sub.chapters.findIndex(c=>c.id===chapterId);
+lastUndo={kind:'chapter', subjectId:subjectId, index:i, item:ch};
 sub.chapters=sub.chapters.filter(c=>c.id!==chapterId);
 await saveSubject(sub);
 if(state.chapterId===chapterId) goSubject(); else render();
-showToast('Chapter deleted.');
+showToast('Chapter deleted.', undoDelete);
 });
 }
 function deleteTopic(subjectId, chapterId, topicId){
@@ -982,8 +1181,10 @@ if(chapterId && !findChapter(sub, chapterId)) return;
 let t=findTopic(sub, chapterId, topicId); if(!t) return;
 askDelete('Delete topic?', '"'+t.name+'" will be removed.', async ()=>{
 let list=topicList(sub, chapterId);
-let i=list.findIndex(x=>x.id===topicId); if(i>=0) list.splice(i,1);
-await saveSubject(sub); render(); showToast('Topic deleted.');
+let i=list.findIndex(x=>x.id===topicId);
+lastUndo={kind:'topic', subjectId:subjectId, chapterId:chapterId, index:i, item:t};
+if(i>=0) list.splice(i,1);
+await saveSubject(sub); render(); showToast('Topic deleted.', undoDelete);
 });
 }
 
@@ -1016,6 +1217,7 @@ let sub=findSubject(subjectId); if(!sub) return;
 if(chapterId && !findChapter(sub, chapterId)) return;
 let r=findResource(sub, chapterId, resId); if(!r) return;
 formDraftKey=null;
+let offlineNote=(typeof navigator!=='undefined' && !navigator.onLine) ? '<p class="empty" style="margin:10px 0 0">You are offline. Videos and web pages need internet to load.</p>' : '';
 let yid=youtubeId(r.url);
 let preview='';
 if(yid){
@@ -1025,6 +1227,7 @@ preview='<iframe class="embed-page" src="'+esc(r.url)+'" allowfullscreen></ifram
 }
 openForm(r.name,
 (r.content ? '<label>Content</label><div class="view-note">'+esc(r.content)+'</div>' : '')
++offlineNote
 +preview
 +'<div class="res-open"><button class="btn" onclick="openResourceLink(event,\''+sub.id+'\',\''+(chapterId||'')+'\',\''+r.id+'\')">Open link ↗</button></div>',
 'Edit resource', ()=>{ openEditResource(subjectId, chapterId, resId); });
@@ -1054,8 +1257,10 @@ if(chapterId && !findChapter(sub, chapterId)) return;
 let r=findResource(sub, chapterId, resId); if(!r) return;
 askDelete('Delete resource?', '"'+r.name+'" will be removed.', async ()=>{
 let list=resourceList(sub, chapterId);
-let i=list.findIndex(x=>x.id===resId); if(i>=0) list.splice(i,1);
-await saveSubject(sub); render(); showToast('Resource deleted.');
+let i=list.findIndex(x=>x.id===resId);
+lastUndo={kind:'resource', subjectId:subjectId, chapterId:chapterId, index:i, item:r};
+if(i>=0) list.splice(i,1);
+await saveSubject(sub); render(); showToast('Resource deleted.', undoDelete);
 });
 }
 
@@ -1148,17 +1353,34 @@ $('printArea').innerHTML=html; window.print();
 }
 function togglePdfOpt(key){
 pdfOpts[key]=!pdfOpts[key]; savePdfOpts();
-let ids={details:'pdfOptDetails', questions:'pdfOptQuestions', answers:'pdfOptAnswers', subjectTopics:'pdfOptSubjectTopics', resources:'pdfOptResources'};
-let b=$(ids[key]); if(b) b.classList.toggle('on', !!pdfOpts[key]);
-let row=$('pdfOptAnswersRow'); if(row) row.classList.toggle('off', !pdfOpts.questions);
+let ids={details:'pdfOptDetails', resources:'pdfOptResources', questions:'pdfOptQuestions', answers:'pdfOptAnswers', chapters:'pdfOptChapters', chTopics:'pdfOptChTopics', chQuestions:'pdfOptChQuestions', chResources:'pdfOptChResources', subjectTopics:'pdfOptSubjectTopics', subjectResources:'pdfOptSubjectResources'};
+let b=$(ids[key]); if(b){ b.classList.toggle('on', !!pdfOpts[key]); b.setAttribute('aria-checked', pdfOpts[key]?'true':'false'); }
+if(key==='chapters' || key==='chQuestions' || key==='questions'){ let fb=$('formBody'); if(fb) fb.innerHTML=pdfOptionsHTML(pdfOptionsIsSubject); }
 }
-function pdfOptionsHTML(showSubjectTopics){
-return '<div class="optrow"><div><b>Chapter details</b><span>Topics, notes and everything in the chapter</span></div><button type="button" class="switch'+(pdfOpts.details?' on':'')+'" id="pdfOptDetails" onclick="togglePdfOpt(\'details\')"></button></div>'
-+(showSubjectTopics ? '<div class="optrow"><div><b>Subject topics</b><span>Independent topics added to the subject itself</span></div><button type="button" class="switch'+(pdfOpts.subjectTopics?' on':'')+'" id="pdfOptSubjectTopics" onclick="togglePdfOpt(\'subjectTopics\')"></button></div>' : '')
-+'<div class="optrow"><div><b>Resources</b><span>Links and videos saved here</span></div><button type="button" class="switch'+(pdfOpts.resources?' on':'')+'" id="pdfOptResources" onclick="togglePdfOpt(\'resources\')"></button></div>'
-+'<div class="optrow"><div><b>Questions</b><span>All questions in this chapter, grouped by part</span></div><button type="button" class="switch'+(pdfOpts.questions?' on':'')+'" id="pdfOptQuestions" onclick="togglePdfOpt(\'questions\')"></button></div>'
-+'<div class="optrow sub'+(pdfOpts.questions?'':' off')+'" id="pdfOptAnswersRow"><div><b>Answers</b><span>Include the answer under each question</span></div><button type="button" class="switch'+(pdfOpts.answers?' on':'')+'" id="pdfOptAnswers" onclick="togglePdfOpt(\'answers\')"></button></div>'
-+'<p class="mut" style="margin-top:12px">Questions without answers look like a traditional question paper — grouped by part, with marks.</p>';
+function pdfOptionsHTML(isSubject){
+let offline=(typeof navigator!=='undefined' && !navigator.onLine);
+function row(id, label, desc, on, sub, disabled){
+let key=id[0].toLowerCase()+id.slice(1);
+return '<div class="optrow'+(sub?' sub':'')+(disabled?' off':'')+'"><div><b>'+label+'</b><span>'+desc+'</span></div><button type="button" class="switch'+(on?' on':'')+'" role="switch" aria-checked="'+(on?'true':'false')+'" aria-label="'+label+'" id="pdfOpt'+id+'" onclick="togglePdfOpt(\''+key+'\')"></button></div>';
+}
+let html='';
+if(isSubject){
+html+=row('Chapters','Chapters','The chapter sections', pdfOpts.chapters)
++row('ChTopics','Chapter topics','Topics inside each chapter', pdfOpts.chTopics, true, !pdfOpts.chapters)
++row('ChQuestions','Chapter questions','Questions inside each chapter', pdfOpts.chQuestions, true, !pdfOpts.chapters)
++row('ChResources','Chapter resources','Links and videos inside each chapter', pdfOpts.chResources, true, !pdfOpts.chapters)
++row('Answers','Answers','Include the answer under each question', pdfOpts.answers, true, !pdfOpts.chapters || !pdfOpts.chQuestions)
++row('SubjectTopics','Subject topics','Independent topics added to the subject itself', pdfOpts.subjectTopics)
++row('SubjectResources','Subject resources','Links and videos saved on the subject itself', pdfOpts.subjectResources);
+} else {
+html+=row('Details','Chapter details','Topics, notes and everything in the chapter', pdfOpts.details)
++row('Resources','Resources','Links and videos saved here', pdfOpts.resources)
++row('Questions','Questions','All questions in this chapter, grouped by part', pdfOpts.questions)
++row('Answers','Answers','Include the answer under each question', pdfOpts.answers, true, !pdfOpts.questions);
+}
+html+='<p class="mut" style="margin-top:12px">Questions without answers look like a traditional question paper — grouped by part, with marks.</p>';
+if(offline) html+='<p class="mut" style="margin-top:8px">You are offline. The PDF library needs internet the first time it loads.</p>';
+return html;
 }
 function addQuestionsToPdf(P, ch, sub, includeAnswers){
 let doc=P.doc;
@@ -1253,8 +1475,24 @@ html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(r.name)+'</h3>'
 });
 return html;
 }
+function applySubjectPdfPreset(){
+let t=state.subjectTab||'chapters';
+if(t==='topics'){ pdfOpts.chapters=false; pdfOpts.chTopics=false; pdfOpts.chQuestions=false; pdfOpts.chResources=false; pdfOpts.answers=false; pdfOpts.subjectTopics=true; pdfOpts.subjectResources=false; }
+else if(t==='resources'){ pdfOpts.chapters=false; pdfOpts.chTopics=false; pdfOpts.chQuestions=false; pdfOpts.chResources=false; pdfOpts.answers=false; pdfOpts.subjectTopics=false; pdfOpts.subjectResources=true; }
+else { pdfOpts.chapters=true; pdfOpts.chTopics=true; pdfOpts.chQuestions=true; pdfOpts.chResources=true; pdfOpts.answers=false; pdfOpts.subjectTopics=false; pdfOpts.subjectResources=false; }
+savePdfOpts();
+}
+function applyChapterPdfPreset(){
+let t=state.chapterTab||'topics';
+if(t==='questions'){ pdfOpts.details=false; pdfOpts.resources=false; pdfOpts.questions=true; pdfOpts.answers=true; }
+else if(t==='resources'){ pdfOpts.details=false; pdfOpts.resources=true; pdfOpts.questions=false; pdfOpts.answers=false; }
+else { pdfOpts.details=true; pdfOpts.resources=true; pdfOpts.questions=true; pdfOpts.answers=true; }
+savePdfOpts();
+}
 function saveChapterPDF(subjectId, chapterId){
 formDraftKey=null;
+applyChapterPdfPreset();
+pdfOptionsIsSubject=false;
 openForm('Save as PDF', pdfOptionsHTML(false), 'Download PDF', ()=>{ genChapterPDF(subjectId, chapterId); });
 }
 async function genChapterPDF(subjectId, chapterId){
@@ -1300,30 +1538,42 @@ showToast('PDF downloaded.');
 }
 function saveSubjectPDF(subjectId){
 formDraftKey=null;
+applySubjectPdfPreset();
+pdfOptionsIsSubject=true;
 openForm('Save as PDF', pdfOptionsHTML(true), 'Download PDF', ()=>{ genSubjectPDF(subjectId); });
 }
 async function genSubjectPDF(subjectId){
 let sub=findSubject(subjectId); if(!sub) return;
-if(!pdfOpts.details && !pdfOpts.subjectTopics && !pdfOpts.resources && !pdfOpts.questions){ showToast('Choose at least one thing to include.'); return; }
-if(pdfOpts.questions && !pdfOpts.details && !pdfOpts.subjectTopics && !pdfOpts.resources && !sub.chapters.some(c=>(c.questions||[]).length)){ showToast('No questions in this subject yet.'); return; }
-if(pdfOpts.subjectTopics && !pdfOpts.details && !pdfOpts.questions && !pdfOpts.resources && !(sub.topics||[]).length){ showToast('No subject topics yet.'); return; }
-if(pdfOpts.resources && !pdfOpts.details && !pdfOpts.subjectTopics && !pdfOpts.questions && !(sub.resources||[]).length && !sub.chapters.some(c=>(c.resources||[]).length)){ showToast('No resources in this subject yet.'); return; }
+if(!pdfOpts.chapters && !pdfOpts.subjectTopics && !pdfOpts.subjectResources){ showToast('Choose at least one thing to include.'); return; }
+/* Each guard fires only when that section is the only thing selected and it is
+   empty — otherwise the PDF still has the other sections to show. */
+let onlySubjectTopics=!pdfOpts.chapters && pdfOpts.subjectTopics && !pdfOpts.subjectResources;
+let onlySubjectResources=!pdfOpts.chapters && !pdfOpts.subjectTopics && pdfOpts.subjectResources;
+let onlyChTopics=pdfOpts.chapters && pdfOpts.chTopics && !pdfOpts.chQuestions && !pdfOpts.chResources && !pdfOpts.subjectTopics && !pdfOpts.subjectResources;
+let onlyChQuestions=pdfOpts.chapters && !pdfOpts.chTopics && pdfOpts.chQuestions && !pdfOpts.chResources && !pdfOpts.subjectTopics && !pdfOpts.subjectResources;
+let onlyChResources=pdfOpts.chapters && !pdfOpts.chTopics && !pdfOpts.chQuestions && pdfOpts.chResources && !pdfOpts.subjectTopics && !pdfOpts.subjectResources;
+if(onlySubjectTopics && !(sub.topics||[]).length){ showToast('No subject topics yet.'); return; }
+if(onlySubjectResources && !(sub.resources||[]).length){ showToast('No subject resources yet.'); return; }
+if(onlyChTopics && !sub.chapters.some(c=>(c.topics||[]).length)){ showToast('No chapter topics yet.'); return; }
+if(onlyChQuestions && !sub.chapters.some(c=>(c.questions||[]).length)){ showToast('No questions in this subject yet.'); return; }
+if(onlyChResources && !sub.chapters.some(c=>(c.resources||[]).length)){ showToast('No chapter resources yet.'); return; }
 closeForm();
 try{ await loadJsPDF(); }
 catch(e){
 showToast('PDF needs internet the first time — opening print instead.');
 let html='<div class="print-chapter"><h1>'+esc(sub.name)+'</h1><p class="pline">'+esc(sub.code)+'</p>';
 sub.chapters.forEach((ch)=>{
-html+='<div class="print-topic"><h3>'+esc(ch.name)+'</h3>'+(pdfOpts.details?'<div class="pmeta">Difficulty: '+diffLabel(ch.difficulty)+' · Importance: '+impLabel(ch.importance)+'</div>':'')+'</div>';
-if(pdfOpts.details){
+if(!pdfOpts.chapters) return;
+html+='<div class="print-topic"><h3>'+esc(ch.name)+'</h3><div class="pmeta">Difficulty: '+diffLabel(ch.difficulty)+' · Importance: '+impLabel(ch.importance)+'</div></div>';
+if(pdfOpts.chTopics){
 ch.topics.forEach((t,i)=>{
 html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(t.name)+'</h3>'
 +'<div class="pmeta">Difficulty: '+diffLabel(t.difficulty)+' · Importance: '+impLabel(t.importance)+'</div>'
 +(t.note ? '<div class="pnote">'+esc(t.note)+'</div>' : '<div class="pmeta" style="margin-top:6px">No notes.</div>')+'</div>';
 });
 }
-if(pdfOpts.questions){ html+=printQuestionsHTML(ch, sub, pdfOpts.answers); }
-if(pdfOpts.resources){ html+=printResourcesHTML(ch.resources); }
+if(pdfOpts.chQuestions){ html+=printQuestionsHTML(ch, sub, pdfOpts.answers); }
+if(pdfOpts.chResources){ html+=printResourcesHTML(ch.resources); }
 });
 if(pdfOpts.subjectTopics){
 html+='<div class="print-topic"><h3>Subject topics</h3></div>';
@@ -1333,7 +1583,7 @@ html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(t.name)+'</h3>'
 +(t.note ? '<div class="pnote">'+esc(t.note)+'</div>' : '<div class="pmeta" style="margin-top:6px">No notes.</div>')+'</div>';
 });
 }
-if(pdfOpts.resources){ html+=printResourcesHTML(sub.resources); }
+if(pdfOpts.subjectResources){ html+=printResourcesHTML(sub.resources); }
 html+='</div>'; printFallback(html); return;
 }
 showToast('Making your PDF…');
@@ -1355,8 +1605,11 @@ doc.text(headParts.join('  ·  '), P.W/2, P.getY(), {align:'center'}); P.addY(8)
 if(sub.dist && anyDist(sub.dist)){ doc.setFontSize(11); doc.text(distLine(sub.dist), P.W/2, P.getY(), {align:'center'}); P.addY(8); }
 P.addY(6);
 P.rule();
+let renderedAny=false;
 sub.chapters.forEach((ch, ci)=>{
-if(ci>0){ doc.addPage(); P.setY(P.M); }
+if(!pdfOpts.chapters) return;
+if(renderedAny){ doc.addPage(); P.setY(P.M); }
+renderedAny=true;
 doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(P.INK[0],P.INK[1],P.INK[2]);
 let chLines=doc.splitTextToSize(ch.name, P.CW);
 doc.text(chLines, P.W/2, P.getY(), {align:'center'}); P.addY(chLines.length*9+4);
@@ -1364,12 +1617,13 @@ P.pillsRow([{text:diffLabel(ch.difficulty), color:diffColor(ch.difficulty)}, {te
 doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(P.GREY[0],P.GREY[1],P.GREY[2]);
 doc.text(ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'  ·  '+(ch.questions||[]).length+' question'+((ch.questions||[]).length===1?'':'s')+'  ·  '+(ch.resources||[]).length+' resource'+((ch.resources||[]).length===1?'':'s'), P.W/2, P.getY(), {align:'center'}); P.addY(12);
 P.rule();
-if(pdfOpts.details){ ch.topics.forEach((t,i)=>{ P.topicBlock(String(i+1), t); }); }
-if(pdfOpts.questions){ addQuestionsToPdf(P, ch, sub, pdfOpts.answers); }
-if(pdfOpts.resources){ addResourcesToPdf(P, ch.resources); }
+if(pdfOpts.chTopics){ ch.topics.forEach((t,i)=>{ P.topicBlock(String(i+1), t); }); }
+if(pdfOpts.chQuestions){ addQuestionsToPdf(P, ch, sub, pdfOpts.answers); }
+if(pdfOpts.chResources){ addResourcesToPdf(P, ch.resources); }
 });
 if(pdfOpts.subjectTopics && (sub.topics||[]).length){
-if(sub.chapters.length){ doc.addPage(); P.setY(P.M); }
+if(renderedAny){ doc.addPage(); P.setY(P.M); }
+renderedAny=true;
 doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(P.INK[0],P.INK[1],P.INK[2]);
 doc.text('Subject topics', P.W/2, P.getY(), {align:'center'}); P.addY(13);
 doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(P.GREY[0],P.GREY[1],P.GREY[2]);
@@ -1377,8 +1631,9 @@ doc.text(sub.topics.length+' topic'+(sub.topics.length===1?'':'s'), P.W/2, P.get
 P.rule();
 sub.topics.forEach((t,i)=>{ P.topicBlock(String(i+1), t); });
 }
-if(pdfOpts.resources && (sub.resources||[]).length){
-if(sub.chapters.length || (pdfOpts.subjectTopics && (sub.topics||[]).length)){ doc.addPage(); P.setY(P.M); }
+if(pdfOpts.subjectResources && (sub.resources||[]).length){
+if(renderedAny){ doc.addPage(); P.setY(P.M); }
+renderedAny=true;
 addResourcesToPdf(P, sub.resources);
 }
 P.footer();
