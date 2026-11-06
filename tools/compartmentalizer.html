@@ -143,7 +143,7 @@ body.home-view .fab{bottom:122px}
 .dd.open .dd-menu{display:block}
 @keyframes dropin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 .dd-opt{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;background:transparent;color:#1d1d1f;padding:13px 12px;min-height:44px;border-radius:9px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;text-align:left}
-.dd-opt:hover{background:#f5f5f7}
+.dd-opt:hover,.dd-opt:focus{background:#f5f5f7}
 .dd-opt .tick{color:#1d1d1f;font-weight:800}
 .dd-btn.diff-easy{color:#137333}
 .dd-btn.diff-hard{color:#c81e1e}
@@ -222,7 +222,7 @@ html.dark .optrow{border-color:#38383a}
 html.dark .explore,html.dark .site-footer{border-top-color:#38383a}
 html.dark .explore span:last-child{color:#0a84ff}
 html.dark .back{color:#0a84ff}
-html.dark .dd-opt:hover{background:#2c2c2e}
+html.dark .dd-opt:hover,html.dark .dd-opt:focus{background:#2c2c2e}
 html.dark .dd-opt .tick{color:#f5f5f7}
 html.dark .topic.drop-before{border-top-color:#f5f5f7}
 html.dark .topic.drop-after{border-bottom-color:#f5f5f7}
@@ -644,12 +644,19 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeAllDropdown
 /* Keyboard support for the custom dropdowns — Down opens and moves, Up moves,
    Escape closes and returns focus to the button. Enter and Space already work:
    the options are real buttons, so they fire a click. */
+/* The option the keyboard lands on is the current value, so moving through the
+   list starts where you are instead of at the top. */
+function focusCurrentOption(dd){
+let cur=dd.querySelector('.dd-opt[data-value="'+dd.dataset.value+'"]') || dd.querySelector('.dd-opt');
+if(cur) cur.focus();
+}
 document.addEventListener('keydown', e=>{
 let btn=e.target.closest && e.target.closest('.dd-btn');
-if(btn && e.key==='ArrowDown'){
+if(btn && (e.key==='ArrowDown' || e.key==='ArrowUp')){
 e.preventDefault();
-let dd=btn.closest('.dd'); let was=dd.classList.contains('open'); closeAllDropdowns();
-if(!was){ dd.classList.add('open'); let first=dd.querySelector('.dd-opt'); if(first) first.focus(); }
+let dd=btn.closest('.dd');
+if(dd.classList.contains('open')){ focusCurrentOption(dd); }
+else { closeAllDropdowns(); dd.classList.add('open'); focusCurrentOption(dd); }
 return;
 }
 let opt=e.target.closest && e.target.closest('.dd-opt');
