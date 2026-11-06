@@ -26,7 +26,7 @@ h1{font-size:40px;line-height:1.05;letter-spacing:-.03em;margin:10px 0 8px;font-
 .card{background:#fff;border-radius:20px;padding:24px;margin-top:20px;box-shadow:0 1px 2px rgba(0,0,0,.05);text-align:left}
 h2{font-size:17px;letter-spacing:-.01em;margin:0 0 14px;font-weight:700}
 label{display:block;font-size:12px;font-weight:600;color:#86868b;letter-spacing:.04em;text-transform:uppercase;margin:14px 0 6px;text-align:left}
-input[type=text],input[type=number]{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;border-radius:12px;padding:13px 14px;font-size:15px;font-family:Inter,sans-serif}
+input[type=text],input[type=number],input[type=url]{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;border-radius:12px;padding:13px 14px;font-size:15px;font-family:Inter,sans-serif}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:560px){.grid2{grid-template-columns:1fr}h1{font-size:32px}}
 .btn{border:0;border-radius:12px;padding:15px 18px;font-size:15px;font-weight:700;cursor:pointer;background:#1d1d1f;color:#fff;font-family:Inter,sans-serif;width:100%}
@@ -164,6 +164,17 @@ html,body{background:#fff}
 .print-topic .pnote{font-size:14px;line-height:1.65;white-space:pre-wrap;margin-top:8px}
 
 
+/* Resources */
+.res-url{font-size:12px;color:#86868b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;margin-top:6px}
+.linkbtn{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid #e2e2e7;background:#f5f5f7;color:#1d1d1f;cursor:pointer;display:grid;place-items:center;font-family:Inter,sans-serif}
+.linkbtn svg{width:16px;height:16px}
+.linkbtn:active{transform:scale(.94)}
+.embed-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;margin-top:10px}
+.embed-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.embed-page{width:100%;height:340px;border:1px solid #e2e2e7;border-radius:12px;margin-top:10px;background:#fff}
+.res-open{margin-top:14px}
+.print-topic a{color:#1d1d1f}
+
 /* Explore more tools + personal footer — home page only */
 .explore{position:fixed;left:0;right:0;bottom:48px;z-index:30;display:flex;justify-content:space-between;align-items:center;background:#fff;border-top:1px solid #d2d2d7;padding:18px 22px;color:#1d1d1f;text-decoration:none;font-weight:700;font-size:16px}
 .explore span:last-child{color:#0071e3}
@@ -226,6 +237,24 @@ if(chapterId){ let ch=findChapter(sub, chapterId); return ch ? ch.topics : []; }
 return sub.topics || (sub.topics=[]);
 }
 function findTopic(sub, chapterId, topicId){ return topicList(sub, chapterId).find(x=>x.id===topicId); }
+function resourceList(sub, chapterId){
+if(chapterId){ let ch=findChapter(sub, chapterId); return ch ? (ch.resources||(ch.resources=[])) : []; }
+return sub.resources || (sub.resources=[]);
+}
+function findResource(sub, chapterId, resId){ return resourceList(sub, chapterId).find(x=>x.id===resId); }
+function normalizeUrl(u){ u=String(u||'').trim(); if(!u) return ''; if(!/^[a-z][a-z0-9+.-]*:/i.test(u)) u='https://'+u; return u; }
+function validUrl(u){ return /^https?:\/\/.+\..+/.test(u||''); }
+function youtubeId(url){
+let m=String(url||'').match(/(?:youtube\.com\/(?:watch\?[^#]*v=|embed\/|v\/|shorts\/|live\/)|youtu\.be\/|youtube-nocookie\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+return m?m[1]:null;
+}
+function shortUrl(u){ let s=String(u||'').replace(/^https?:\/\//,'').replace(/^www\./,''); return s.length>44 ? s.slice(0,44)+'…' : s; }
+function openResourceLink(e, subjectId, chapterId, resId){
+if(e) e.stopPropagation();
+let sub=findSubject(subjectId); if(!sub) return;
+let r=findResource(sub, chapterId, resId); if(!r || !r.url) return;
+window.open(r.url, '_blank', 'noopener');
+}
 function openDB(){ return new Promise(res=>{ try{ let req=indexedDB.open(DB_NAME,1); req.onupgradeneeded=e=>{ e.target.result.createObjectStore(STORE,{keyPath:'id'}); }; req.onsuccess=e=>{ db=e.target.result; idbReady=true; res(true); }; req.onerror=()=>{ idbReady=false; res(false); }; }catch(e){ idbReady=false; res(false); } }); }
 function idbAll(){ return new Promise(res=>{ let tx=db.transaction(STORE,'readonly'); let req=tx.objectStore(STORE).getAll(); req.onsuccess=()=>res(req.result||[]); req.onerror=()=>res([]); }); }
 function idbPut(sub){ return new Promise(res=>{ let tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(sub); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }); }
@@ -287,12 +316,16 @@ if(sub.dist===undefined){ sub.dist=null; migrated=true; }
 sub.dist=normalizeDist(sub.dist);
 if(!sub.topics){ sub.topics=[]; migrated=true; }
 sub.topics=sub.topics.map(t=>({difficulty:'medium', importance:'important', note:'', ...t, note:(t.note||'')}));
+if(!sub.resources){ sub.resources=[]; migrated=true; }
+sub.resources=sub.resources.map(r=>({name:'', content:'', url:'', ...r, name:(r.name||''), content:(r.content||''), url:(r.url||'')}));
 sub.chapters.forEach(ch=>{
 if(!ch.difficulty){ ch.difficulty='medium'; migrated=true; }
 if(!ch.importance){ ch.importance='important'; migrated=true; }
 ch.topics=(ch.topics||[]).map(t=>({difficulty:'medium', importance:'important', note:'', ...t, note:(t.note||'')}));
 if(!ch.questions){ ch.questions=[]; migrated=true; }
 ch.questions=ch.questions.map(q=>({part:'A', cat:'K', answer:'', ...q, text:(q.text||'')}));
+if(!ch.resources){ ch.resources=[]; migrated=true; }
+ch.resources=ch.resources.map(r=>({name:'', content:'', url:'', ...r, name:(r.name||''), content:(r.content||''), url:(r.url||'')}));
 });
 });
 if(migrated && idbReady){ for(let sub of state.subjects) await idbPut(sub); }
@@ -348,8 +381,8 @@ let out={A:[],B:[],C:[]};
 return out;
 }
 const PDF_OPTS_KEY='compartmentalizerPdfOptsV1';
-let pdfOpts={details:true, questions:true, answers:false, subjectTopics:true};
-try{ let saved=JSON.parse(localStorage.getItem(PDF_OPTS_KEY)||'null'); if(saved) pdfOpts={details:true, questions:true, answers:false, subjectTopics:true, ...saved}; }catch(e){}
+let pdfOpts={details:true, questions:true, answers:false, subjectTopics:true, resources:true};
+try{ let saved=JSON.parse(localStorage.getItem(PDF_OPTS_KEY)||'null'); if(saved) pdfOpts={details:true, questions:true, answers:false, subjectTopics:true, resources:true, ...saved}; }catch(e){}
 function savePdfOpts(){ try{ localStorage.setItem(PDF_OPTS_KEY, JSON.stringify(pdfOpts)); }catch(e){} }
 function ddHTML(kind, value, opts, extra, btnClass){
 let cur=opts.find(o=>String(o.v)===String(value))||opts[0];
@@ -415,8 +448,8 @@ function switchSubjectTab(tab){ state.subjectTab=tab; render(); }
 function goSubject(){ state.view='subject'; state.chapterId=null; state.subjectTab='chapters'; render(); window.scrollTo(0,0); }
 function fabAction(){
 if(state.view==='main') openAddSubject();
-else if(state.view==='subject'){ if(state.subjectTab==='topics') openAddTopic(state.subjectId, ''); else openAddChapter(state.subjectId); }
-else if(state.view==='chapter'){ if(state.chapterTab==='questions') openAddQuestion(state.subjectId, state.chapterId); else openAddTopic(state.subjectId, state.chapterId); }
+else if(state.view==='subject'){ if(state.subjectTab==='topics') openAddTopic(state.subjectId, ''); else if(state.subjectTab==='resources') openAddResource(state.subjectId, ''); else openAddChapter(state.subjectId); }
+else if(state.view==='chapter'){ if(state.chapterTab==='questions') openAddQuestion(state.subjectId, state.chapterId); else if(state.chapterTab==='resources') openAddResource(state.subjectId, state.chapterId); else openAddTopic(state.subjectId, state.chapterId); }
 }
 
 /* Render */
@@ -439,7 +472,8 @@ html+='<div class="card" style="text-align:center"><p class="empty" style="margi
 state.subjects.forEach(sub=>{
 let totalTopics=sub.chapters.reduce((n,c)=>n+c.topics.length,0)+(sub.topics||[]).length;
 let totalQuestions=sub.chapters.reduce((n,c)=>n+(c.questions||[]).length,0);
-html+='<div class="subj-tile" onclick="openSubject(\''+sub.id+'\')"><div><h3>'+esc(sub.name)+'</h3>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')+'<div class="meta">'+sub.chapters.length+' chapter'+(sub.chapters.length===1?'':'s')+' · '+totalTopics+' topic'+(totalTopics===1?'':'s')+' · '+totalQuestions+' question'+(totalQuestions===1?'':'s')+'</div></div><span class="chev">›</span></div>';
+let totalResources=(sub.resources||[]).length+sub.chapters.reduce((n,c)=>n+(c.resources||[]).length,0);
+html+='<div class="subj-tile" onclick="openSubject(\''+sub.id+'\')"><div><h3>'+esc(sub.name)+'</h3>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')+'<div class="meta">'+sub.chapters.length+' chapter'+(sub.chapters.length===1?'':'s')+' · '+totalTopics+' topic'+(totalTopics===1?'':'s')+' · '+totalQuestions+' question'+(totalQuestions===1?'':'s')+' · '+totalResources+' resource'+(totalResources===1?'':'s')+'</div></div><span class="chev">›</span></div>';
 });
 }
 html+='<a class="explore" href="https://abybijo.github.io/learning-tools/"><span>Explore more tools</span><span>→</span></a>'
@@ -455,8 +489,14 @@ let html='<div style="text-align:left"><button class="back" onclick="goMain()">�
 +'<div class="overview"><div class="stat"><b>'+fmtDur(sub.durationMin)+'</b><span>Time</span></div><div class="stat"><b>'+sub.maxMarks+'</b><span>Marks</span></div><div class="stat"><b>'+sub.chapters.length+'</b><span>Chapters</span></div><div class="stat"><b>'+totalTopics+'</b><span>Topics</span></div></div>'
 +(sub.dist && anyDist(sub.dist) ? '<div class="distline">'+esc(distLine(sub.dist))+'</div>' : '')
 +'<div style="margin-top:16px"><button class="btn" onclick="saveSubjectPDF(\''+sub.id+'\')">Save subject as PDF</button></div>'
-+'<div class="tabs"><button class="tab'+(state.subjectTab==='chapters'?' on':'')+'" onclick="switchSubjectTab(\'chapters\')">Chapters</button><button class="tab'+(state.subjectTab==='topics'?' on':'')+'" onclick="switchSubjectTab(\'topics\')">Topics</button></div>';
-if(state.subjectTab==='topics'){
++'<div class="tabs"><button class="tab'+(state.subjectTab==='chapters'?' on':'')+'" onclick="switchSubjectTab(\'chapters\')">Chapters</button><button class="tab'+(state.subjectTab==='topics'?' on':'')+'" onclick="switchSubjectTab(\'topics\')">Topics</button><button class="tab'+(state.subjectTab==='resources'?' on':'')+'" onclick="switchSubjectTab(\'resources\')">Resources</button></div>';
+if(state.subjectTab==='resources'){
+if(!(sub.resources||[]).length){
+html+='<div class="card listfade" style="text-align:center"><p class="empty" style="margin:0">No resources yet.<br>Tap + below to add your first resource.</p></div>';
+} else {
+html+='<div class="listfade">'+sub.resources.map(r=>resourceRowHTML(sub,'',r)).join('')+'</div>';
+}
+} else if(state.subjectTab==='topics'){
 if(!(sub.topics||[]).length){
 html+='<div class="card listfade" style="text-align:center"><p class="empty" style="margin:0">No topics yet.<br>Tap + below to add your first topic.</p></div>';
 } else {
@@ -469,8 +509,9 @@ html+='<div class="card listfade" style="text-align:center"><p class="empty" sty
 html+='<div class="listfade">';
 sub.chapters.forEach(ch=>{
 let qCount=(ch.questions||[]).length;
+let rCount=(ch.resources||[]).length;
 html+='<div class="chapter-row" onclick="openChapter(event,\''+sub.id+'\',\''+ch.id+'\')"><h4>'+esc(ch.name)+'</h4>'
-+'<div class="chapter-meta"><span class="pill diff-'+ch.difficulty+'">'+diffLabel(ch.difficulty)+'</span><span class="pill imp-'+ch.importance+'">'+impLabel(ch.importance)+'</span><span class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+' · '+qCount+' question'+(qCount===1?'':'s')+'</span></div></div>';
++'<div class="chapter-meta"><span class="pill diff-'+ch.difficulty+'">'+diffLabel(ch.difficulty)+'</span><span class="pill imp-'+ch.importance+'">'+impLabel(ch.importance)+'</span><span class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+' · '+qCount+' question'+(qCount===1?'':'s')+' · '+rCount+' resource'+(rCount===1?'':'s')+'</span></div></div>';
 });
 html+='</div>';
 }
@@ -490,16 +531,31 @@ return '<div class="qrow" onclick="openQuestionPopup(\''+sub.id+'\',\''+ch.id+'\
 +'<div class="topic-main"><div class="name">'+esc(q.text)+'</div>'
 +'<div class="topic-meta"><span class="pill">'+partLabel(q.part)+'</span><span class="pill">'+catLabel(q.cat)+'</span></div></div><span class="chev">›</span></div>';
 }
+function resourceRowHTML(sub, chapterId, r){
+let preview=notePreview(r.content);
+return '<div class="qrow" onclick="openResourcePopup(\''+sub.id+'\',\''+(chapterId||'')+'\',\''+r.id+'\')">'
++'<div class="topic-main"><div class="name">'+esc(r.name)+'</div>'
++(preview?'<div class="topic-meta"><span class="note-preview">'+esc(preview)+'</span></div>':'')
++'<div class="res-url">'+esc(shortUrl(r.url))+'</div></div>'
++'<button class="linkbtn" onclick="openResourceLink(event,\''+sub.id+'\',\''+(chapterId||'')+'\',\''+r.id+'\')" aria-label="Open link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button></div>';
+}
 function renderChapter(){
 let sub=findSubject(state.subjectId); let ch=sub ? findChapter(sub, state.chapterId) : null;
 if(!sub || !ch){ goMain(); return; }
 let qCount=(ch.questions||[]).length;
+let rCount=(ch.resources||[]).length;
 let html='<div style="text-align:left"><button class="back" onclick="goSubject()">‹ '+esc(sub.name)+'</button></div>'
 +'<div class="pagehead"><h2>'+esc(ch.name)+'</h2>'
 +'<button class="editbtn" onclick="openEditChapter(\''+sub.id+'\',\''+ch.id+'\')" aria-label="Edit chapter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button></div>'
-+'<div class="chapter-meta" style="justify-content:center;margin-top:12px"><span class="pill diff-'+ch.difficulty+'">'+diffLabel(ch.difficulty)+'</span><span class="pill imp-'+ch.importance+'">'+impLabel(ch.importance)+'</span><span class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+' · '+qCount+' question'+(qCount===1?'':'s')+'</span></div>'
-+'<div class="tabs"><button class="tab'+(state.chapterTab==='topics'?' on':'')+'" onclick="switchChapterTab(\'topics\')">Topics</button><button class="tab'+(state.chapterTab==='questions'?' on':'')+'" onclick="switchChapterTab(\'questions\')">Questions</button></div>';
-if(state.chapterTab==='questions'){
++'<div class="chapter-meta" style="justify-content:center;margin-top:12px"><span class="pill diff-'+ch.difficulty+'">'+diffLabel(ch.difficulty)+'</span><span class="pill imp-'+ch.importance+'">'+impLabel(ch.importance)+'</span><span class="count">'+ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+' · '+qCount+' question'+(qCount===1?'':'s')+' · '+rCount+' resource'+(rCount===1?'':'s')+'</span></div>'
++'<div class="tabs"><button class="tab'+(state.chapterTab==='topics'?' on':'')+'" onclick="switchChapterTab(\'topics\')">Topics</button><button class="tab'+(state.chapterTab==='questions'?' on':'')+'" onclick="switchChapterTab(\'questions\')">Questions</button><button class="tab'+(state.chapterTab==='resources'?' on':'')+'" onclick="switchChapterTab(\'resources\')">Resources</button></div>';
+if(state.chapterTab==='resources'){
+if(!rCount){
+html+='<div class="card listfade" style="text-align:center"><p class="empty" style="margin:0">No resources yet.<br>Tap + below to add your first resource.</p></div>';
+} else {
+html+='<div class="listfade">'+ch.resources.map(r=>resourceRowHTML(sub,ch.id,r)).join('')+'</div>';
+}
+} else if(state.chapterTab==='questions'){
 if(!qCount){
 html+='<div class="card listfade" style="text-align:center"><p class="empty" style="margin:0">No questions yet.<br>Tap + below to add your first question.</p></div>';
 } else {
@@ -640,7 +696,7 @@ if(!name){ showToast('Add a subject name first.'); $('fName').focus(); return; }
 if(!marks || marks<=0){ showToast('Add the maximum marks, e.g. 70.'); $('fMarks').focus(); return; }
 if(!min || min<=0){ showToast('Choose a duration, or type custom minutes.'); return; }
 let d=readDist(); let distErr=distError(d, marks); if(distErr){ showToast(distErr); return; }
-state.subjects.push({id:uid(), name:name, code:code, durationMin:min, maxMarks:marks, dist:anyDist(d)?d:null, chapters:[], topics:[]});
+state.subjects.push({id:uid(), name:name, code:code, durationMin:min, maxMarks:marks, dist:anyDist(d)?d:null, chapters:[], topics:[], resources:[]});
 await saveSubject(state.subjects[state.subjects.length-1]);
 closeForm(); showToast('Subject added.'); render();
 });
@@ -675,7 +731,7 @@ openForm('Add Chapter',
 let name=$('fChName').value.trim();
 if(!name){ showToast('Add a chapter name first.'); $('fChName').focus(); return; }
 let diff=$('addChDiff').dataset.value, imp=$('addChImp').dataset.value;
-sub.chapters.push({id:uid(), name:name, difficulty:diff, importance:imp, topics:[]});
+sub.chapters.push({id:uid(), name:name, difficulty:diff, importance:imp, topics:[], resources:[]});
 await saveSubject(sub); closeForm(); showToast('Chapter added.'); render();
 });
 setTimeout(()=>{ let n=$('fChName'); if(n) n.focus(); }, 50);
@@ -802,7 +858,7 @@ await saveSubject(sub); closeForm(); showToast('Chapter saved.'); render();
 /* Deletes — always with confirmation */
 function deleteSubject(id){
 let sub=findSubject(id); if(!sub) return;
-askDelete('Delete subject?', '"'+sub.name+'" and all its chapters and topics will be removed.', async ()=>{
+askDelete('Delete subject?', '"'+sub.name+'" and all its chapters, topics, questions and resources will be removed.', async ()=>{
 state.subjects=state.subjects.filter(s=>s.id!==id);
 await deleteSubjectFromStore(id);
 if(state.subjectId===id) goMain(); else render();
@@ -811,7 +867,7 @@ showToast('Subject deleted.');
 }
 function deleteChapter(subjectId, chapterId){
 let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
-askDelete('Delete chapter?', '"'+ch.name+'" and all its topics will be removed.', async ()=>{
+askDelete('Delete chapter?', '"'+ch.name+'" and all its topics, questions and resources will be removed.', async ()=>{
 sub.chapters=sub.chapters.filter(c=>c.id!==chapterId);
 await saveSubject(sub);
 if(state.chapterId===chapterId) goSubject(); else render();
@@ -826,6 +882,75 @@ askDelete('Delete topic?', '"'+t.name+'" will be removed.', async ()=>{
 let list=topicList(sub, chapterId);
 let i=list.findIndex(x=>x.id===topicId); if(i>=0) list.splice(i,1);
 await saveSubject(sub); render(); showToast('Topic deleted.');
+});
+}
+
+/* Resources — links, YouTube videos, embedded videos. The link icon opens the
+   URL directly; tapping anywhere else on the tile previews it in place.
+   YouTube links are auto-detected and play embedded; other pages load in an
+   embedded frame where the site allows it, with an Open link button always
+   present. Watching needs internet; the resource itself is saved locally. */
+function openAddResource(subjectId, chapterId){
+let sub=findSubject(subjectId); if(!sub) return;
+if(chapterId && !findChapter(sub, chapterId)) return;
+let list=resourceList(sub, chapterId);
+openForm('Add Resource',
+'<label>Resource name</label><input type="text" id="fResName" placeholder="e.g. Normalization explained" autocomplete="off">'
++'<label>Content</label><textarea id="fResContent" placeholder="What is this? (optional)"></textarea>'
++'<label>Link</label><input type="url" id="fResUrl" placeholder="https://…" autocomplete="off" inputmode="url">',
+'Add resource', async ()=>{
+let name=$('fResName').value.trim();
+let url=normalizeUrl($('fResUrl').value);
+if(!name){ showToast('Add a resource name first.'); $('fResName').focus(); return; }
+if(!validUrl(url)){ showToast('Add a valid link, e.g. https://www.youtube.com/watch?v=…'); $('fResUrl').focus(); return; }
+list.push({id:uid(), name:name, content:$('fResContent').value, url:url});
+await saveSubject(sub); closeForm(); showToast('Resource added.'); render();
+});
+setTimeout(()=>{ let n=$('fResName'); if(n) n.focus(); }, 50);
+}
+function openResourcePopup(subjectId, chapterId, resId){
+let sub=findSubject(subjectId); if(!sub) return;
+if(chapterId && !findChapter(sub, chapterId)) return;
+let r=findResource(sub, chapterId, resId); if(!r) return;
+let yid=youtubeId(r.url);
+let preview='';
+if(yid){
+preview='<div class="embed-wrap"><iframe src="https://www.youtube-nocookie.com/embed/'+yid+'" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+} else {
+preview='<iframe class="embed-page" src="'+esc(r.url)+'" allowfullscreen></iframe><p class="empty" style="margin:8px 0 0">If the page does not load here, open the link below.</p>';
+}
+openForm(r.name,
+(r.content ? '<label>Content</label><div class="view-note">'+esc(r.content)+'</div>' : '')
++preview
++'<div class="res-open"><button class="btn" onclick="openResourceLink(event,\''+sub.id+'\',\''+(chapterId||'')+'\',\''+r.id+'\')">Open link ↗</button></div>',
+'Edit resource', ()=>{ openEditResource(subjectId, chapterId, resId); });
+}
+function openEditResource(subjectId, chapterId, resId){
+let sub=findSubject(subjectId); if(!sub) return;
+if(chapterId && !findChapter(sub, chapterId)) return;
+let r=findResource(sub, chapterId, resId); if(!r) return;
+openForm('Edit Resource',
+'<label>Resource name</label><input type="text" id="fResName" value="'+esc(r.name)+'" autocomplete="off">'
++'<label>Content</label><textarea id="fResContent" placeholder="What is this? (optional)">'+esc(r.content||'')+'</textarea>'
++'<label>Link</label><input type="url" id="fResUrl" value="'+esc(r.url)+'" autocomplete="off" inputmode="url">',
+'Save', async ()=>{
+let name=$('fResName').value.trim();
+let url=normalizeUrl($('fResUrl').value);
+if(!name){ showToast('Add a resource name first.'); $('fResName').focus(); return; }
+if(!validUrl(url)){ showToast('Add a valid link, e.g. https://www.youtube.com/watch?v=…'); $('fResUrl').focus(); return; }
+r.name=name; r.content=$('fResContent').value; r.url=url;
+await saveSubject(sub); closeForm(); showToast('Resource saved.'); render();
+},
+'<div style="margin-top:16px;text-align:center"><button class="smallbtn danger" onclick="closeForm();deleteResource(\''+sub.id+'\',\''+(chapterId||'')+'\',\''+r.id+'\')">Delete resource</button></div>');
+}
+function deleteResource(subjectId, chapterId, resId){
+let sub=findSubject(subjectId); if(!sub) return;
+if(chapterId && !findChapter(sub, chapterId)) return;
+let r=findResource(sub, chapterId, resId); if(!r) return;
+askDelete('Delete resource?', '"'+r.name+'" will be removed.', async ()=>{
+let list=resourceList(sub, chapterId);
+let i=list.findIndex(x=>x.id===resId); if(i>=0) list.splice(i,1);
+await saveSubject(sub); render(); showToast('Resource deleted.');
 });
 }
 
@@ -918,13 +1043,14 @@ $('printArea').innerHTML=html; window.print();
 }
 function togglePdfOpt(key){
 pdfOpts[key]=!pdfOpts[key]; savePdfOpts();
-let ids={details:'pdfOptDetails', questions:'pdfOptQuestions', answers:'pdfOptAnswers', subjectTopics:'pdfOptSubjectTopics'};
+let ids={details:'pdfOptDetails', questions:'pdfOptQuestions', answers:'pdfOptAnswers', subjectTopics:'pdfOptSubjectTopics', resources:'pdfOptResources'};
 let b=$(ids[key]); if(b) b.classList.toggle('on', !!pdfOpts[key]);
 let row=$('pdfOptAnswersRow'); if(row) row.classList.toggle('off', !pdfOpts.questions);
 }
 function pdfOptionsHTML(showSubjectTopics){
 return '<div class="optrow"><div><b>Chapter details</b><span>Topics, notes and everything in the chapter</span></div><button type="button" class="switch'+(pdfOpts.details?' on':'')+'" id="pdfOptDetails" onclick="togglePdfOpt(\'details\')"></button></div>'
 +(showSubjectTopics ? '<div class="optrow"><div><b>Subject topics</b><span>Independent topics added to the subject itself</span></div><button type="button" class="switch'+(pdfOpts.subjectTopics?' on':'')+'" id="pdfOptSubjectTopics" onclick="togglePdfOpt(\'subjectTopics\')"></button></div>' : '')
++'<div class="optrow"><div><b>Resources</b><span>Links and videos saved here</span></div><button type="button" class="switch'+(pdfOpts.resources?' on':'')+'" id="pdfOptResources" onclick="togglePdfOpt(\'resources\')"></button></div>'
 +'<div class="optrow"><div><b>Questions</b><span>All questions in this chapter, grouped by part</span></div><button type="button" class="switch'+(pdfOpts.questions?' on':'')+'" id="pdfOptQuestions" onclick="togglePdfOpt(\'questions\')"></button></div>'
 +'<div class="optrow sub'+(pdfOpts.questions?'':' off')+'" id="pdfOptAnswersRow"><div><b>Answers</b><span>Include the answer under each question</span></div><button type="button" class="switch'+(pdfOpts.answers?' on':'')+'" id="pdfOptAnswers" onclick="togglePdfOpt(\'answers\')"></button></div>'
 +'<p class="mut" style="margin-top:12px">Questions without answers look like a traditional question paper — grouped by part, with marks.</p>';
@@ -980,13 +1106,56 @@ html+='</div>';
 });
 return html;
 }
+function addResourcesToPdf(P, resources){
+let doc=P.doc;
+if(!resources || !resources.length) return false;
+P.need(30);
+doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(P.INK[0],P.INK[1],P.INK[2]);
+doc.text('Resources', P.M, P.getY()); P.addY(12);
+resources.forEach((r,i)=>{
+let nameLines=doc.splitTextToSize((i+1)+'. '+r.name, P.CW);
+let cLines=r.content ? doc.splitTextToSize(r.content, P.CW) : [];
+let urlLines=doc.splitTextToSize(r.url, P.CW);
+let blockH=nameLines.length*6 + (cLines.length?cLines.length*6+2:0) + urlLines.length*6 + 12;
+P.need(blockH);
+doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(P.INK[0],P.INK[1],P.INK[2]);
+doc.text(nameLines, P.M, P.getY()); P.addY(nameLines.length*6);
+if(cLines.length){
+doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(P.GREY[0],P.GREY[1],P.GREY[2]);
+doc.text(cLines, P.M, P.getY()); P.addY(cLines.length*6+2);
+}
+doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(P.INK[0],P.INK[1],P.INK[2]);
+urlLines.forEach(line=>{
+let w=doc.getTextWidth(line);
+doc.text(line, P.M, P.getY());
+doc.setDrawColor(P.INK[0],P.INK[1],P.INK[2]); doc.setLineWidth(0.3);
+doc.line(P.M, P.getY()+1.5, P.M+w, P.getY()+1.5);
+doc.link(P.M, P.getY()-4, w, 6, {url:r.url});
+P.addY(6);
+});
+P.addY(4);
+doc.setDrawColor(P.LINE[0],P.LINE[1],P.LINE[2]); doc.setLineWidth(0.3); doc.line(P.M, P.getY(), P.W-P.M, P.getY()); P.addY(8);
+});
+return true;
+}
+function printResourcesHTML(resources){
+if(!resources || !resources.length) return '';
+let html='<div class="print-topic"><h3>Resources</h3></div>';
+resources.forEach((r,i)=>{
+html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(r.name)+'</h3>'
++(r.content ? '<div class="pnote">'+esc(r.content)+'</div>' : '')
++'<div class="pnote"><a href="'+esc(r.url)+'">'+esc(r.url)+'</a></div></div>';
+});
+return html;
+}
 function saveChapterPDF(subjectId, chapterId){
 openForm('Save as PDF', pdfOptionsHTML(false), 'Download PDF', ()=>{ genChapterPDF(subjectId, chapterId); });
 }
 async function genChapterPDF(subjectId, chapterId){
 let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
-if(!pdfOpts.details && !pdfOpts.questions){ showToast('Choose at least one thing to include.'); return; }
-if(pdfOpts.questions && !(ch.questions||[]).length && !pdfOpts.details){ showToast('No questions in this chapter yet.'); return; }
+if(!pdfOpts.details && !pdfOpts.resources && !pdfOpts.questions){ showToast('Choose at least one thing to include.'); return; }
+if(pdfOpts.questions && !(ch.questions||[]).length && !pdfOpts.details && !pdfOpts.resources){ showToast('No questions in this chapter yet.'); return; }
+if(pdfOpts.resources && !pdfOpts.details && !pdfOpts.questions && !(ch.resources||[]).length){ showToast('No resources in this chapter yet.'); return; }
 closeForm();
 try{ await loadJsPDF(); }
 catch(e){
@@ -1002,6 +1171,7 @@ html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(t.name)+'</h3>'
 });
 }
 if(pdfOpts.questions){ html+=printQuestionsHTML(ch, sub, pdfOpts.answers); }
+if(pdfOpts.resources){ html+=printResourcesHTML(ch.resources); }
 html+='</div>'; printFallback(html); return;
 }
 showToast('Making your PDF…');
@@ -1017,6 +1187,7 @@ P.pillsRow([{text:diffLabel(ch.difficulty), color:diffColor(ch.difficulty)}, {te
 P.rule();
 if(pdfOpts.details){ ch.topics.forEach((t,i)=>{ P.topicBlock(String(i+1), t); }); }
 if(pdfOpts.questions){ addQuestionsToPdf(P, ch, sub, pdfOpts.answers); }
+if(pdfOpts.resources){ addResourcesToPdf(P, ch.resources); }
 P.footer();
 doc.save(pdfSafeName(sub.name)+' – '+pdfSafeName(ch.name)+'.pdf');
 showToast('PDF downloaded.');
@@ -1026,9 +1197,10 @@ openForm('Save as PDF', pdfOptionsHTML(true), 'Download PDF', ()=>{ genSubjectPD
 }
 async function genSubjectPDF(subjectId){
 let sub=findSubject(subjectId); if(!sub) return;
-if(!pdfOpts.details && !pdfOpts.subjectTopics && !pdfOpts.questions){ showToast('Choose at least one thing to include.'); return; }
-if(pdfOpts.questions && !pdfOpts.details && !pdfOpts.subjectTopics && !sub.chapters.some(c=>(c.questions||[]).length)){ showToast('No questions in this subject yet.'); return; }
-if(pdfOpts.subjectTopics && !pdfOpts.details && !pdfOpts.questions && !(sub.topics||[]).length){ showToast('No subject topics yet.'); return; }
+if(!pdfOpts.details && !pdfOpts.subjectTopics && !pdfOpts.resources && !pdfOpts.questions){ showToast('Choose at least one thing to include.'); return; }
+if(pdfOpts.questions && !pdfOpts.details && !pdfOpts.subjectTopics && !pdfOpts.resources && !sub.chapters.some(c=>(c.questions||[]).length)){ showToast('No questions in this subject yet.'); return; }
+if(pdfOpts.subjectTopics && !pdfOpts.details && !pdfOpts.questions && !pdfOpts.resources && !(sub.topics||[]).length){ showToast('No subject topics yet.'); return; }
+if(pdfOpts.resources && !pdfOpts.details && !pdfOpts.subjectTopics && !pdfOpts.questions && !(sub.resources||[]).length && !sub.chapters.some(c=>(c.resources||[]).length)){ showToast('No resources in this subject yet.'); return; }
 closeForm();
 try{ await loadJsPDF(); }
 catch(e){
@@ -1044,6 +1216,7 @@ html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(t.name)+'</h3>'
 });
 }
 if(pdfOpts.questions){ html+=printQuestionsHTML(ch, sub, pdfOpts.answers); }
+if(pdfOpts.resources){ html+=printResourcesHTML(ch.resources); }
 });
 if(pdfOpts.subjectTopics){
 html+='<div class="print-topic"><h3>Subject topics</h3></div>';
@@ -1053,10 +1226,12 @@ html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(t.name)+'</h3>'
 +(t.note ? '<div class="pnote">'+esc(t.note)+'</div>' : '<div class="pmeta" style="margin-top:6px">No notes.</div>')+'</div>';
 });
 }
+if(pdfOpts.resources){ html+=printResourcesHTML(sub.resources); }
 html+='</div>'; printFallback(html); return;
 }
 showToast('Making your PDF…');
 let totalTopics=sub.chapters.reduce((n,c)=>n+c.topics.length,0)+(sub.topics||[]).length;
+let totalResources=(sub.resources||[]).length+sub.chapters.reduce((n,c)=>n+(c.resources||[]).length,0);
 let P=makePdf(), doc=P.doc;
 P.eyebrow();
 doc.setFont('helvetica','bold'); doc.setFontSize(26); doc.setTextColor(P.INK[0],P.INK[1],P.INK[2]);
@@ -1065,7 +1240,7 @@ doc.text(titleLines, P.W/2, P.getY(), {align:'center'}); P.addY(titleLines.lengt
 doc.setFont('helvetica','normal'); doc.setFontSize(13); doc.setTextColor(P.GREY[0],P.GREY[1],P.GREY[2]);
 if(sub.code){ doc.text(sub.code, P.W/2, P.getY(), {align:'center'}); P.addY(8); }
 doc.setFontSize(11);
-doc.text(fmtDur(sub.durationMin)+'  ·  '+sub.maxMarks+' marks  ·  '+sub.chapters.length+' chapters  ·  '+totalTopics+' topics', P.W/2, P.getY(), {align:'center'}); P.addY(8);
+doc.text(fmtDur(sub.durationMin)+'  ·  '+sub.maxMarks+' marks  ·  '+sub.chapters.length+' chapters  ·  '+totalTopics+' topics  ·  '+totalResources+' resources', P.W/2, P.getY(), {align:'center'}); P.addY(8);
 if(sub.dist && anyDist(sub.dist)){ doc.setFontSize(11); doc.text(distLine(sub.dist), P.W/2, P.getY(), {align:'center'}); P.addY(8); }
 P.addY(6);
 P.rule();
@@ -1076,10 +1251,11 @@ let chLines=doc.splitTextToSize(ch.name, P.CW);
 doc.text(chLines, P.W/2, P.getY(), {align:'center'}); P.addY(chLines.length*9+4);
 P.pillsRow([{text:diffLabel(ch.difficulty), color:diffColor(ch.difficulty)}, {text:impLabel(ch.importance), color:impColor(ch.importance)}], P.getY()); P.addY(6);
 doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(P.GREY[0],P.GREY[1],P.GREY[2]);
-doc.text(ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'  ·  '+(ch.questions||[]).length+' question'+((ch.questions||[]).length===1?'':'s'), P.W/2, P.getY(), {align:'center'}); P.addY(12);
+doc.text(ch.topics.length+' topic'+(ch.topics.length===1?'':'s')+'  ·  '+(ch.questions||[]).length+' question'+((ch.questions||[]).length===1?'':'s')+'  ·  '+(ch.resources||[]).length+' resource'+((ch.resources||[]).length===1?'':'s'), P.W/2, P.getY(), {align:'center'}); P.addY(12);
 P.rule();
 if(pdfOpts.details){ ch.topics.forEach((t,i)=>{ P.topicBlock(String(i+1), t); }); }
 if(pdfOpts.questions){ addQuestionsToPdf(P, ch, sub, pdfOpts.answers); }
+if(pdfOpts.resources){ addResourcesToPdf(P, ch.resources); }
 });
 if(pdfOpts.subjectTopics && (sub.topics||[]).length){
 if(sub.chapters.length){ doc.addPage(); P.setY(P.M); }
@@ -1089,6 +1265,10 @@ doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(P.GREY[
 doc.text(sub.topics.length+' topic'+(sub.topics.length===1?'':'s'), P.W/2, P.getY(), {align:'center'}); P.addY(12);
 P.rule();
 sub.topics.forEach((t,i)=>{ P.topicBlock(String(i+1), t); });
+}
+if(pdfOpts.resources && (sub.resources||[]).length){
+if(sub.chapters.length || (pdfOpts.subjectTopics && (sub.topics||[]).length)){ doc.addPage(); P.setY(P.M); }
+addResourcesToPdf(P, sub.resources);
 }
 P.footer();
 doc.save(pdfSafeName(sub.name)+'.pdf');
