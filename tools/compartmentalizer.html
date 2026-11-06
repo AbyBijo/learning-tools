@@ -425,14 +425,17 @@ else { try{ localStorage.setItem(LS_FALLBACK, JSON.stringify(state.subjects)); }
 /* Backup — everything lives in this browser, so a backup file is the safety net.
    Export downloads all subjects as one JSON file; Import replaces everything
    with the backup file, after a confirmation. */
-function exportData(){
-let data={app:'compartmentalizer', version:1, exportedAt:new Date().toISOString(), subjects:state.subjects};
+function dateStamp(){ let d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function downloadBackupFile(subjects, filename){
+let data={app:'compartmentalizer', version:1, exportedAt:new Date().toISOString(), subjects:subjects};
 let blob=new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
 let a=document.createElement('a');
-let d=new Date(); let stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-a.href=URL.createObjectURL(blob); a.download='compartmentalizer-backup-'+stamp+'.json';
+a.href=URL.createObjectURL(blob); a.download=filename;
 document.body.appendChild(a); a.click(); a.remove();
 setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function exportData(){
+downloadBackupFile(state.subjects, 'compartmentalizer-backup-'+dateStamp()+'.json');
 showToast('Backup downloaded.');
 }
 function importData(){ let f=$('importFile'); if(f) f.click(); }
@@ -452,6 +455,50 @@ sub.resources=(Array.isArray(x.resources)?x.resources:[]).map(normRes);
 sub.chapters=(Array.isArray(x.chapters)?x.chapters:[]).map(c=>({id:(c.id||uid()), name:String(c.name||''), difficulty:['easy','medium','hard'].includes(c.difficulty)?c.difficulty:'medium', importance:['less','important','very'].includes(c.importance)?c.importance:'important', topics:(Array.isArray(c.topics)?c.topics:[]).map(normTopic), questions:(Array.isArray(c.questions)?c.questions:[]).map(q=>({id:(q.id||uid()), text:String(q.text||''), part:['A','B','C'].includes(q.part)?q.part:'A', cat:['K','U','A','AN'].includes(q.cat)?q.cat:'K', answer:String(q.answer||'')})), resources:(Array.isArray(c.resources)?c.resources:[]).map(normRes)}));
 return sub;
 }
+/* Deep merge — import only ever adds. Every subject, chapter, topic, question
+   and resource has a stable ID from when it was created. On import, an ID that
+   already exists here keeps what it has and is looked inside for new children;
+   an ID that is new is added whole. No field is ever overwritten, nothing is
+   ever removed. */
+let pendingImport=null;
+function mergeBackup(list){
+let added={subjects:0, chapters:0, topics:0, questions:0, resources:0};
+function countSubject(s){
+added.chapters+=s.chapters.length;
+s.chapters.forEach(c=>{ added.topics+=c.topics.length; added.questions+=(c.questions||[]).length; added.resources+=(c.resources||[]).length; });
+added.topics+=(s.topics||[]).length;
+added.resources+=(s.resources||[]).length;
+}
+function addMissing(into, from, key){
+(from||[]).forEach(item=>{
+if(into.find(x=>x.id===item.id)) return;
+into.push(item); added[key]++;
+});
+}
+list.forEach(incSub=>{
+let sub=findSubject(incSub.id);
+if(!sub){ state.subjects.push(incSub); added.subjects++; countSubject(incSub); return; }
+(incSub.chapters||[]).forEach(incCh=>{
+let ch=findChapter(sub, incCh.id);
+if(!ch){ sub.chapters.push(incCh); added.chapters++; added.topics+=incCh.topics.length; added.questions+=(incCh.questions||[]).length; added.resources+=(incCh.resources||[]).length; return; }
+addMissing(ch.topics, incCh.topics, 'topics');
+addMissing(ch.questions, incCh.questions, 'questions');
+addMissing(ch.resources, incCh.resources, 'resources');
+});
+addMissing(sub.topics, incSub.topics, 'topics');
+addMissing(sub.resources, incSub.resources, 'resources');
+});
+return added;
+}
+function mergeSummary(a){
+let parts=[];
+if(a.subjects) parts.push(a.subjects+' subject'+(a.subjects===1?'':'s'));
+if(a.chapters) parts.push(a.chapters+' chapter'+(a.chapters===1?'':'s'));
+if(a.topics) parts.push(a.topics+' topic'+(a.topics===1?'':'s'));
+if(a.questions) parts.push(a.questions+' question'+(a.questions===1?'':'s'));
+if(a.resources) parts.push(a.resources+' resource'+(a.resources===1?'':'s'));
+return parts.length ? 'Added '+parts.join(', ')+'.' : 'Nothing new to add.';
+}
 async function importFileChanged(e){
 let file=e.target.files && e.target.files[0];
 e.target.value='';
@@ -460,8 +507,26 @@ let text='';
 try{ text=await file.text(); }catch(err){ showToast('Could not read that file.'); return; }
 let list=parseBackup(text);
 if(!list){ showToast('That file is not a Compartmentalizer backup.'); return; }
-askDelete('Import backup?', 'This will replace all your subjects with the backup file.', async ()=>{
-state.subjects=list.map(normalizeImportedSubject);
+pendingImport=list.map(normalizeImportedSubject);
+formDraftKey=null;
+openForm('Import backup?',
+'<p class="mut" style="margin:0">The backup is merged into what you have now. Anything new is added; nothing you have is changed or removed.</p>',
+'Merge — add what is new', async ()=>{
+let added=mergeBackup(pendingImport);
+pendingImport=null;
+for(let s of state.subjects) await saveSubject(s);
+closeForm(); goMain(); showToast(mergeSummary(added));
+},
+'<div style="margin-top:16px;text-align:center"><button class="smallbtn danger" onclick="closeForm();askReplaceBackup()">Replace everything instead</button></div>');
+}
+/* Replace — the true restore. Kept as an explicit choice; a safety backup of
+   what you have now is downloaded first, so nothing is lost by accident. */
+function askReplaceBackup(){
+if(!pendingImport) return;
+askDelete('Replace everything?', 'All your subjects will be replaced by the backup file. A safety backup of what you have now will be downloaded first.', async ()=>{
+downloadBackupFile(state.subjects, 'compartmentalizer-backup-before-replace-'+dateStamp()+'.json');
+let list=pendingImport; pendingImport=null;
+state.subjects=list;
 for(let s of state.subjects) await saveSubject(s);
 if(idbReady){ let old=await idbAll(); for(let o of old){ if(!state.subjects.find(x=>x.id===o.id)) await idbDel(o.id); } }
 else { try{ localStorage.setItem(LS_FALLBACK, JSON.stringify(state.subjects)); }catch(err){} }
@@ -726,7 +791,7 @@ html+='<div class="subj-tile" data-subject="'+sub.id+'" onclick="openSubject(\''
 });
 }
 html+='<div class="card" id="searchEmpty" style="display:none;text-align:center"><p class="empty" style="margin:0">No subjects match that search.</p></div>'
-+'<div class="card"><h2 style="margin-bottom:6px">Your data</h2><p class="mut" style="margin:0 0 12px">Everything is saved in this browser. Export a backup file to keep a copy, or import one to restore it.</p><div class="row" style="margin-top:0"><button class="btn sec" onclick="exportData()">Export backup</button><button class="btn sec" onclick="importData()">Import backup</button></div><input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importFileChanged(event)"></div>'
++'<div class="card"><h2 style="margin-bottom:6px">Your data</h2><p class="mut" style="margin:0 0 12px">Everything is saved in this browser. Export a backup file to keep a copy, or import one to add what is new — nothing you have is changed or removed.</p><div class="row" style="margin-top:0"><button class="btn sec" onclick="exportData()">Export backup</button><button class="btn sec" onclick="importData()">Import backup</button></div><input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importFileChanged(event)"></div>'
 +'<a class="explore" href="https://abybijo.github.io/learning-tools/"><span>Explore more tools</span><span>→</span></a>'
 +'<footer class="site-footer"><b>Aby Bijo</b><a href="https://github.com/AbyBijo"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.15c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.34.95.11-.74.4-1.25.72-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 1.67.41.35.77 1.05.77 2.12v3.15c0 .3.21.67.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>GitHub</a><a href="https://www.linkedin.com/in/aby-bijo-102359282"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z"/></svg>LinkedIn</a></footer>';
 w.innerHTML=html;
