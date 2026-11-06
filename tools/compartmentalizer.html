@@ -26,7 +26,7 @@ h1{font-size:40px;line-height:1.05;letter-spacing:-.03em;margin:10px 0 8px;font-
 .card{background:#fff;border-radius:20px;padding:24px;margin-top:20px;box-shadow:0 1px 2px rgba(0,0,0,.05);text-align:left}
 h2{font-size:17px;letter-spacing:-.01em;margin:0 0 14px;font-weight:700}
 label{display:block;font-size:12px;font-weight:600;color:#86868b;letter-spacing:.04em;text-transform:uppercase;margin:14px 0 6px;text-align:left}
-input[type=text],input[type=number],input[type=url]{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;border-radius:12px;padding:13px 14px;font-size:15px;font-family:Inter,sans-serif}
+input[type=text],input[type=number]{width:100%;background:#f5f5f7;border:1px solid #e2e2e7;color:#1d1d1f;border-radius:12px;padding:13px 14px;font-size:15px;font-family:Inter,sans-serif}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:560px){.grid2{grid-template-columns:1fr}h1{font-size:32px}}
 .btn{border:0;border-radius:12px;padding:15px 18px;font-size:15px;font-weight:700;cursor:pointer;background:#1d1d1f;color:#fff;font-family:Inter,sans-serif;width:100%}
@@ -897,7 +897,7 @@ let list=resourceList(sub, chapterId);
 openForm('Add Resource',
 '<label>Resource name</label><input type="text" id="fResName" placeholder="e.g. Normalization explained" autocomplete="off">'
 +'<label>Content</label><textarea id="fResContent" placeholder="What is this? (optional)"></textarea>'
-+'<label>Link</label><input type="url" id="fResUrl" placeholder="https://…" autocomplete="off" inputmode="url">',
++'<label>Link</label><input type="text" id="fResUrl" placeholder="https://…" autocomplete="off" inputmode="url">',
 'Add resource', async ()=>{
 let name=$('fResName').value.trim();
 let url=normalizeUrl($('fResUrl').value);
@@ -932,7 +932,7 @@ let r=findResource(sub, chapterId, resId); if(!r) return;
 openForm('Edit Resource',
 '<label>Resource name</label><input type="text" id="fResName" value="'+esc(r.name)+'" autocomplete="off">'
 +'<label>Content</label><textarea id="fResContent" placeholder="What is this? (optional)">'+esc(r.content||'')+'</textarea>'
-+'<label>Link</label><input type="url" id="fResUrl" value="'+esc(r.url)+'" autocomplete="off" inputmode="url">',
++'<label>Link</label><input type="text" id="fResUrl" value="'+esc(r.url)+'" autocomplete="off" inputmode="url">',
 'Save', async ()=>{
 let name=$('fResName').value.trim();
 let url=normalizeUrl($('fResUrl').value);
