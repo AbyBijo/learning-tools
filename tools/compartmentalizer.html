@@ -175,6 +175,12 @@ html,body{background:#fff}
 .res-open{margin-top:14px}
 .print-topic a{color:#1d1d1f}
 
+/* Optional subject fields — toggle off darkens and fades the field */
+.opthead{display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px}
+.opthead label{margin:0}
+.optfield.off{opacity:.45}
+.optfield.off input,.optfield.off textarea,.optfield.off .dd{pointer-events:none}
+
 /* Explore more tools + personal footer — home page only */
 .explore{position:fixed;left:0;right:0;bottom:48px;z-index:30;display:flex;justify-content:space-between;align-items:center;background:#fff;border-top:1px solid #d2d2d7;padding:18px 22px;color:#1d1d1f;text-decoration:none;font-weight:700;font-size:16px}
 .explore span:last-child{color:#0071e3}
@@ -312,6 +318,9 @@ else { try{ state.subjects=JSON.parse(localStorage.getItem(LS_FALLBACK)||'[]'); 
 let migrated=false;
 state.subjects.forEach(sub=>{
 sub.chapters=sub.chapters||[];
+if(sub.code===undefined) sub.code='';
+if(sub.durationMin===undefined) sub.durationMin=null;
+if(sub.maxMarks===undefined) sub.maxMarks=null;
 if(sub.dist===undefined){ sub.dist=null; migrated=true; }
 sub.dist=normalizeDist(sub.dist);
 if(!sub.topics){ sub.topics=[]; migrated=true; }
@@ -415,7 +424,7 @@ closeAllDropdowns(); return;
 }
 if(!e.target.closest('.dd')) closeAllDropdowns();
 });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeAllDropdowns(); closeForm(); } });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeAllDropdowns(); closeFormKeep(); } });
 
 /* Delete pop-up (custom) */
 let confirmAction=null;
@@ -423,15 +432,65 @@ function askDelete(title, text, action){ $('modalTitle').textContent=title; $('m
 function closeModal(){ $('modal').classList.remove('open'); confirmAction=null; }
 $('modalConfirm').onclick=async ()=>{ let a=confirmAction; closeModal(); if(a) await a(); };
 
+/* Drafts — if a pop-up closes without adding (tapping outside it, or Escape),
+   what was typed is saved and restored the next time the same pop-up opens.
+   Closing it manually (Cancel) or adding it clears the draft, so the next
+   add starts empty. One draft per form, kept in the browser only. */
+const DRAFT_KEY='compartmentalizerDraftsV1';
+let formDraftKey=null;
+const DRAFT_INPUT_IDS=['fName','fCode','fMarks','customMin','editCustomMin','fChName','fTopicName','fTopicNote','fQText','fQAnswer','fResName','fResContent','fResUrl','distAmarks','distAtotal','distAattempt','distBmarks','distBtotal','distBattempt','distCmarks','distCtotal','distCattempt'];
+const DRAFT_DD_IDS=['addChDiff','addChImp','addTopicDiff','addTopicImp','editTopicDiff','editTopicImp','editChDiff','editChImp','durDD','editDurDD','addQPart','addQCat','editQPart','editQCat'];
+const DRAFT_DD_KINDS={addChDiff:'addchapter-diff',addChImp:'addchapter-imp',addTopicDiff:'addtopic-diff',addTopicImp:'addtopic-imp',editTopicDiff:'edittopic-diff',editTopicImp:'edittopic-imp',editChDiff:'editchapter-diff',editChImp:'editchapter-imp',durDD:'add-dur',editDurDD:'edit-dur',addQPart:'addq-part',addQCat:'addq-cat',editQPart:'editq-part',editQCat:'editq-cat'};
+function loadDrafts(){ try{ return JSON.parse(localStorage.getItem(DRAFT_KEY)||'{}'); }catch(e){ return {}; } }
+function saveDrafts(d){ try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); }catch(e){} }
+function collectDraft(){
+let fields={}, dds={}, toggles={};
+DRAFT_INPUT_IDS.forEach(id=>{ let el=$(id); if(el) fields[id]=el.value; });
+DRAFT_DD_IDS.forEach(id=>{ let dd=$(id); if(dd) dds[id]={value:dd.dataset.value, kind:DRAFT_DD_KINDS[id]}; });
+['code','dur','marks'].forEach(f=>{ toggles[f]=!!subFieldToggles[f]; });
+return {fields:fields, dds:dds, toggles:toggles};
+}
+function saveCurrentDraft(){
+if(!formDraftKey) return;
+let d=loadDrafts(); d[formDraftKey]=collectDraft(); saveDrafts(d);
+}
+function clearCurrentDraft(){
+if(!formDraftKey) return;
+let d=loadDrafts(); delete d[formDraftKey]; saveDrafts(d);
+}
+function restoreDraft(){
+if(!formDraftKey) return;
+let d=loadDrafts()[formDraftKey]; if(!d) return;
+Object.keys(d.fields||{}).forEach(id=>{ let el=$(id); if(el) el.value=d.fields[id]; });
+Object.keys(d.dds||{}).forEach(id=>{
+let dd=$(id); if(!dd) return;
+let val=d.dds[id].value; dd.dataset.value=val;
+let kind=d.dds[id].kind;
+let opt=dd.querySelector ? dd.querySelector('.dd-opt[data-value="'+val+'"]') : null;
+if(opt){
+let label=opt.querySelector('span'); let lab=dd.querySelector('.dd-label'); if(label && lab) lab.textContent=label.textContent;
+dd.querySelectorAll('.tick').forEach(t=>t.textContent=''); let tick=opt.querySelector('.tick'); if(tick) tick.textContent='✓';
+}
+if(kind && (kind.slice(-5)==='-diff' || kind.slice(-4)==='-imp')){
+let btn=dd.querySelector('.dd-btn'); if(btn) btn.className='dd-btn pill '+(kind.slice(-5)==='-diff'?'diff-':'imp-')+val;
+}
+if(kind==='add-dur' || kind==='edit-dur'){ let w=$(kind==='edit-dur'?'editCustomWrap':'customDurWrap'); if(w) w.style.display = val==='custom' ? 'block':'none'; }
+});
+Object.keys(d.toggles||{}).forEach(f=>{ setSubFieldToggle(f, d.toggles[f]); });
+updateDistSummary();
+}
+
 /* Form pop-up (custom) — Add Subject / Edit Subject / Add Chapter / Add Topic */
 let formSubmit=null;
 function openForm(title, bodyHTML, primaryLabel, onSubmit, extraHTML){
 $('formTitle').textContent=title; $('formBody').innerHTML=bodyHTML;
 $('formPrimary').textContent=primaryLabel; $('formExtra').innerHTML=extraHTML||'';
 formSubmit=onSubmit; $('formModal').classList.add('open');
+restoreDraft();
 }
-function closeForm(){ $('formModal').classList.remove('open'); formSubmit=null; formTopicId=null; savePlace(); }
-$('formModal').addEventListener('click', e=>{ if(e.target===$('formModal')) closeForm(); });
+function closeForm(){ clearCurrentDraft(); $('formModal').classList.remove('open'); formSubmit=null; formTopicId=null; formDraftKey=null; savePlace(); }
+function closeFormKeep(){ saveCurrentDraft(); $('formModal').classList.remove('open'); formSubmit=null; formTopicId=null; formDraftKey=null; savePlace(); }
+$('formModal').addEventListener('click', e=>{ if(e.target===$('formModal')) closeFormKeep(); });
 $('modal').addEventListener('click', e=>{ if(e.target===$('modal')) closeModal(); });
 function submitForm(){ if(formSubmit) formSubmit(); }
 
@@ -486,7 +545,10 @@ let totalTopics=sub.chapters.reduce((n,c)=>n+c.topics.length,0)+(sub.topics||[])
 let html='<div style="text-align:left"><button class="back" onclick="goMain()">‹ Subjects</button></div>'
 +'<div class="pagehead"><h2>'+esc(sub.name)+'</h2>'+(sub.code?'<span class="codepill">'+esc(sub.code)+'</span>':'')
 +'<button class="editbtn" onclick="openEditSubject(\''+sub.id+'\')" aria-label="Edit subject"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button></div>'
-+'<div class="overview"><div class="stat"><b>'+fmtDur(sub.durationMin)+'</b><span>Time</span></div><div class="stat"><b>'+sub.maxMarks+'</b><span>Marks</span></div><div class="stat"><b>'+sub.chapters.length+'</b><span>Chapters</span></div><div class="stat"><b>'+totalTopics+'</b><span>Topics</span></div></div>'
++'<div class="overview">'
++(sub.durationMin!=null?'<div class="stat"><b>'+fmtDur(sub.durationMin)+'</b><span>Time</span></div>':'')
++(sub.maxMarks!=null?'<div class="stat"><b>'+sub.maxMarks+'</b><span>Marks</span></div>':'')
++'<div class="stat"><b>'+sub.chapters.length+'</b><span>Chapters</span></div><div class="stat"><b>'+totalTopics+'</b><span>Topics</span></div></div>'
 +(sub.dist && anyDist(sub.dist) ? '<div class="distline">'+esc(distLine(sub.dist))+'</div>' : '')
 +'<div style="margin-top:16px"><button class="btn" onclick="saveSubjectPDF(\''+sub.id+'\')">Save subject as PDF</button></div>'
 +'<div class="tabs"><button class="tab'+(state.subjectTab==='chapters'?' on':'')+'" onclick="switchSubjectTab(\'chapters\')">Chapters</button><button class="tab'+(state.subjectTab==='topics'?' on':'')+'" onclick="switchSubjectTab(\'topics\')">Topics</button><button class="tab'+(state.subjectTab==='resources'?' on':'')+'" onclick="switchSubjectTab(\'resources\')">Resources</button></div>';
@@ -640,10 +702,27 @@ let t=findTopic(sub, chapterId, topicId); if(!t) return;
 t[field]=value; await saveSubject(sub);
 }
 
+/* Optional subject fields — code, duration and marks each have a small toggle
+   in the Add / Edit Subject sheet. On is the normal state; off darkens and
+   fades the field and the value is not saved (null). No marks means no mark
+   distribution either. */
+let subFieldToggles={code:true, dur:true, marks:true};
+function optFieldHTML(field, labelText, innerHTML){
+return '<div class="optfield'+(subFieldToggles[field]?'':' off')+'" id="optWrap'+field[0].toUpperCase()+field.slice(1)+'"><div class="opthead"><label>'+labelText+'</label><button type="button" class="switch'+(subFieldToggles[field]?' on':'')+'" data-opt="'+field+'" onclick="toggleSubField(\''+field+'\')"></button></div>'+innerHTML+'</div>';
+}
+function setSubFieldToggle(field, on){
+subFieldToggles[field]=!!on;
+let sw=document.querySelector('.switch[data-opt="'+field+'"]'); if(sw) sw.classList.toggle('on', !!on);
+let wrap=$('optWrap'+field[0].toUpperCase()+field.slice(1)); if(wrap) wrap.classList.toggle('off', !on);
+if(field==='marks') updateDistSummary();
+}
+function toggleSubField(field){ setSubFieldToggle(field, !subFieldToggles[field]); }
+
 /* Pop-ups */
-function durationFields(kind, id, value, customValue){
+function durationFields(kind, id, value, customValue, showLabel){
+if(value==null || value==='') value=120;
 let isCustom=![60,90,120].includes(value);
-return '<label>Duration</label>'+durDDHTML(kind, value, id)
+return (showLabel===false?'':'<label>Duration</label>')+durDDHTML(kind, value, id)
 +'<div id="'+(kind==='edit-dur'?'editCustomWrap':'customDurWrap')+'" style="display:'+(isCustom?'block':'none')+'"><label>Custom duration — minutes</label><input type="number" id="'+(kind==='edit-dur'?'editCustomMin':'customMin')+'" value="'+(isCustom?value:'')+'" placeholder="e.g. 30 or 45" min="5" max="600" inputmode="numeric"></div>';
 }
 function readDuration(kind, id){
@@ -674,29 +753,36 @@ return '<div id="distWrap" style="display:none"><label style="margin-top:18px">M
 }
 function updateDistSummary(){
 let wrap=$('distWrap'); if(!wrap) return;
-let marks=parseInt(($('fMarks')||{value:''}).value,10);
-wrap.style.display=(marks>0)?'block':'none';
+let marksOn=subFieldToggles.marks;
+let marks=marksOn?parseInt(($('fMarks')||{value:''}).value,10):0;
+wrap.style.display=(marksOn && marks>0)?'block':'none';
 let d=readDist();
 let sum=$('distSummary');
 if(sum) sum.textContent=anyDist(d)?('Attempted total: '+distTotal(d)+' of '+(marks||0)+' marks'):'Optional — leave blank if you have not set it up yet.';
 let er=$('distError');
-if(er){ let err=(marks>0)?distError(d, marks):''; er.textContent=err; er.style.display=err?'block':'none'; }
+if(er){ let err=(marksOn && marks>0)?distError(d, marks):''; er.textContent=err; er.style.display=err?'block':'none'; }
 }
 function openAddSubject(){
+subFieldToggles={code:true, dur:true, marks:true};
+formDraftKey='addSubject';
 openForm('Add Subject',
 '<label>Subject name</label><input type="text" id="fName" placeholder="e.g. Quantitative Techniques" autocomplete="off">'
-+'<label>Subject code</label><input type="text" id="fCode" placeholder="e.g. MG3CCRBCA200" autocomplete="off">'
-+durationFields('add-dur', 'durDD', 120, '')
-+'<label>Maximum marks</label><input type="number" id="fMarks" placeholder="e.g. 70" min="1" inputmode="numeric" oninput="updateDistSummary()">'
++optFieldHTML('code', 'Subject code', '<input type="text" id="fCode" placeholder="e.g. MG3CCRBCA200" autocomplete="off">')
++optFieldHTML('dur', 'Duration', durationFields('add-dur', 'durDD', 120, '', false))
++optFieldHTML('marks', 'Maximum marks', '<input type="number" id="fMarks" placeholder="e.g. 70" min="1" inputmode="numeric" oninput="updateDistSummary()">')
 +distFieldsHTML(null),
 'Add subject', async ()=>{
-let name=$('fName').value.trim(); let code=$('fCode').value.trim();
-let marks=parseInt($('fMarks').value,10); let min=readDuration('add-dur','durDD');
+let name=$('fName').value.trim();
+let code=subFieldToggles.code ? $('fCode').value.trim() : '';
+let marks=subFieldToggles.marks ? parseInt($('fMarks').value,10) : null;
+let min=subFieldToggles.dur ? readDuration('add-dur','durDD') : null;
 if(!name){ showToast('Add a subject name first.'); $('fName').focus(); return; }
-if(!marks || marks<=0){ showToast('Add the maximum marks, e.g. 70.'); $('fMarks').focus(); return; }
-if(!min || min<=0){ showToast('Choose a duration, or type custom minutes.'); return; }
-let d=readDist(); let distErr=distError(d, marks); if(distErr){ showToast(distErr); return; }
-state.subjects.push({id:uid(), name:name, code:code, durationMin:min, maxMarks:marks, dist:anyDist(d)?d:null, chapters:[], topics:[], resources:[]});
+if(subFieldToggles.marks && (!marks || marks<=0)){ showToast('Add the maximum marks, e.g. 70.'); $('fMarks').focus(); return; }
+if(subFieldToggles.dur && (!min || min<=0)){ showToast('Choose a duration, or type custom minutes.'); return; }
+let d=subFieldToggles.marks ? readDist() : {A:{marks:0,total:0,attempt:0},B:{marks:0,total:0,attempt:0},C:{marks:0,total:0,attempt:0}};
+let distErr=subFieldToggles.marks ? distError(d, marks) : '';
+if(distErr){ showToast(distErr); return; }
+state.subjects.push({id:uid(), name:name, code:code, durationMin:min, maxMarks:marks, dist:(subFieldToggles.marks && anyDist(d))?d:null, chapters:[], topics:[], resources:[]});
 await saveSubject(state.subjects[state.subjects.length-1]);
 closeForm(); showToast('Subject added.'); render();
 });
@@ -704,18 +790,26 @@ setTimeout(()=>{ updateDistSummary(); let n=$('fName'); if(n) n.focus(); }, 50);
 }
 function openEditSubject(id){
 let sub=findSubject(id); if(!sub) return;
+subFieldToggles={code:(sub.code||'')!=='', dur:sub.durationMin!=null, marks:sub.maxMarks!=null};
+formDraftKey='editSubject:'+id;
 openForm('Edit Subject',
 '<label>Subject name</label><input type="text" id="fName" value="'+esc(sub.name)+'" autocomplete="off">'
-+'<label>Subject code</label><input type="text" id="fCode" value="'+esc(sub.code)+'" autocomplete="off">'
-+durationFields('edit-dur', 'editDurDD', sub.durationMin, '')
-+'<label>Maximum marks</label><input type="number" id="fMarks" value="'+sub.maxMarks+'" min="1" inputmode="numeric" oninput="updateDistSummary()">'
++optFieldHTML('code', 'Subject code', '<input type="text" id="fCode" value="'+esc(sub.code)+'" autocomplete="off">')
++optFieldHTML('dur', 'Duration', durationFields('edit-dur', 'editDurDD', sub.durationMin, '', false))
++optFieldHTML('marks', 'Maximum marks', '<input type="number" id="fMarks" value="'+(sub.maxMarks==null?'':sub.maxMarks)+'" min="1" inputmode="numeric" oninput="updateDistSummary()">')
 +distFieldsHTML(sub.dist),
 'Save', async ()=>{
-let name=$('fName').value.trim(); let code=$('fCode').value.trim();
-let marks=parseInt($('fMarks').value,10); let min=readDuration('edit-dur','editDurDD');
-if(!name || !marks || marks<=0 || !min || min<=0){ showToast('Fill in name, maximum marks and duration.'); return; }
-let d=readDist(); let distErr=distError(d, marks); if(distErr){ showToast(distErr); return; }
-sub.name=name; sub.code=code; sub.maxMarks=marks; sub.durationMin=min; sub.dist=anyDist(d)?d:null;
+let name=$('fName').value.trim();
+let code=subFieldToggles.code ? $('fCode').value.trim() : '';
+let marks=subFieldToggles.marks ? parseInt($('fMarks').value,10) : null;
+let min=subFieldToggles.dur ? readDuration('edit-dur','editDurDD') : null;
+if(!name){ showToast('Add a subject name first.'); $('fName').focus(); return; }
+if(subFieldToggles.marks && (!marks || marks<=0)){ showToast('Add the maximum marks, e.g. 70.'); $('fMarks').focus(); return; }
+if(subFieldToggles.dur && (!min || min<=0)){ showToast('Choose a duration, or type custom minutes.'); return; }
+let d=subFieldToggles.marks ? readDist() : {A:{marks:0,total:0,attempt:0},B:{marks:0,total:0,attempt:0},C:{marks:0,total:0,attempt:0}};
+let distErr=subFieldToggles.marks ? distError(d, marks) : '';
+if(distErr){ showToast(distErr); return; }
+sub.name=name; sub.code=code; sub.maxMarks=marks; sub.durationMin=min; sub.dist=(subFieldToggles.marks && anyDist(d))?d:null;
 await saveSubject(sub); closeForm(); showToast('Subject saved.'); render();
 },
 '<div style="margin-top:16px;text-align:center"><button class="smallbtn danger" onclick="closeForm();deleteSubject(\''+sub.id+'\')">Delete subject</button></div>');
@@ -723,6 +817,7 @@ setTimeout(()=>updateDistSummary(), 50);
 }
 function openAddChapter(subjectId){
 let sub=findSubject(subjectId); if(!sub) return;
+formDraftKey='addChapter:'+subjectId;
 openForm('Add Chapter',
 '<label>Chapter name</label><input type="text" id="fChName" placeholder="e.g. Module 1 — Introduction" autocomplete="off">'
 +'<label>Difficulty</label>'+ddHTML('addchapter-diff', 'medium', DIFF_OPTS, 'id="addChDiff"', 'dd-btn')
@@ -739,6 +834,7 @@ setTimeout(()=>{ let n=$('fChName'); if(n) n.focus(); }, 50);
 function openAddTopic(subjectId, chapterId){
 let sub=findSubject(subjectId); if(!sub) return;
 if(chapterId && !findChapter(sub, chapterId)) return;
+formDraftKey='addTopic:'+subjectId+':'+(chapterId||'');
 let list=topicList(sub, chapterId);
 openForm('Add Topic',
 '<label>Topic name</label><input type="text" id="fTopicName" placeholder="Add a topic" autocomplete="off">'
@@ -759,6 +855,7 @@ setTimeout(()=>{ let n=$('fTopicName'); if(n) n.focus(); }, 50);
 /* Questions — tap a question to see it (view-only). Edit and Delete are separate actions. */
 function openAddQuestion(subjectId, chapterId){
 let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+formDraftKey='addQuestion:'+subjectId+':'+chapterId;
 openForm('Add Question',
 '<label>Question</label><textarea id="fQText" placeholder="Write the question" autocomplete="off"></textarea>'
 +'<label>Part</label>'+ddHTML('addq-part', 'A', PART_OPTS, 'id="addQPart"', 'dd-btn')
@@ -776,6 +873,7 @@ setTimeout(()=>{ let n=$('fQText'); if(n) n.focus(); }, 50);
 function openQuestionPopup(subjectId, chapterId, questionId){
 let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
 let q=(ch.questions||[]).find(x=>x.id===questionId); if(!q) return;
+formDraftKey=null;
 openForm('Question',
 '<div class="chapter-meta" style="justify-content:center;margin-top:0"><span class="pill">'+partLabel(q.part)+'</span><span class="pill">'+catLabel(q.cat)+'</span></div>'
 +'<label>Question</label><div class="view-note">'+esc(q.text)+'</div>'
@@ -785,6 +883,7 @@ openForm('Question',
 }
 function openEditQuestion(subjectId, chapterId, questionId){
 let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+formDraftKey='editQuestion:'+subjectId+':'+chapterId+':'+questionId;
 let q=(ch.questions||[]).find(x=>x.id===questionId); if(!q) return;
 openForm('Edit Question',
 '<label>Question</label><textarea id="fQText" autocomplete="off">'+esc(q.text)+'</textarea>'
@@ -818,6 +917,7 @@ let sub=findSubject(subjectId); if(!sub) return;
 if(chapterId && !findChapter(sub, chapterId)) return;
 let t=findTopic(sub, chapterId, topicId); if(!t) return;
 formTopicId=t.id; savePlace();
+formDraftKey=null;
 openForm(t.name,
 '<div class="chapter-meta" style="justify-content:center;margin-top:0"><span class="pill diff-'+t.difficulty+'">'+diffLabel(t.difficulty)+'</span><span class="pill imp-'+t.importance+'">'+impLabel(t.importance)+'</span></div>'
 +'<label>Note</label>'
@@ -828,6 +928,7 @@ function openEditTopic(subjectId, chapterId, topicId){
 let sub=findSubject(subjectId); if(!sub) return;
 if(chapterId && !findChapter(sub, chapterId)) return;
 let t=findTopic(sub, chapterId, topicId); if(!t) return;
+formDraftKey='editTopic:'+subjectId+':'+(chapterId||'')+':'+topicId;
 openForm('Edit Topic',
 '<label>Topic name</label><input type="text" id="fTopicName" value="'+esc(t.name)+'" autocomplete="off">'
 +'<label>Difficulty</label>'+ddHTML('edittopic-diff', t.difficulty, DIFF_OPTS, 'id="editTopicDiff"', 'dd-btn')
@@ -843,6 +944,7 @@ await saveSubject(sub); closeForm(); showToast('Topic saved.'); render();
 }
 function openEditChapter(subjectId, chapterId){
 let sub=findSubject(subjectId); if(!sub) return; let ch=findChapter(sub, chapterId); if(!ch) return;
+formDraftKey='editChapter:'+subjectId+':'+chapterId;
 openForm('Edit Chapter',
 '<label>Chapter name</label><input type="text" id="fChName" value="'+esc(ch.name)+'" autocomplete="off">'
 +'<label>Difficulty</label>'+ddHTML('editchapter-diff', ch.difficulty, DIFF_OPTS, 'id="editChDiff"', 'dd-btn')
@@ -893,6 +995,7 @@ await saveSubject(sub); render(); showToast('Topic deleted.');
 function openAddResource(subjectId, chapterId){
 let sub=findSubject(subjectId); if(!sub) return;
 if(chapterId && !findChapter(sub, chapterId)) return;
+formDraftKey='addResource:'+subjectId+':'+(chapterId||'');
 let list=resourceList(sub, chapterId);
 openForm('Add Resource',
 '<label>Resource name</label><input type="text" id="fResName" placeholder="e.g. Normalization explained" autocomplete="off">'
@@ -912,6 +1015,7 @@ function openResourcePopup(subjectId, chapterId, resId){
 let sub=findSubject(subjectId); if(!sub) return;
 if(chapterId && !findChapter(sub, chapterId)) return;
 let r=findResource(sub, chapterId, resId); if(!r) return;
+formDraftKey=null;
 let yid=youtubeId(r.url);
 let preview='';
 if(yid){
@@ -929,6 +1033,7 @@ function openEditResource(subjectId, chapterId, resId){
 let sub=findSubject(subjectId); if(!sub) return;
 if(chapterId && !findChapter(sub, chapterId)) return;
 let r=findResource(sub, chapterId, resId); if(!r) return;
+formDraftKey='editResource:'+subjectId+':'+(chapterId||'')+':'+resId;
 openForm('Edit Resource',
 '<label>Resource name</label><input type="text" id="fResName" value="'+esc(r.name)+'" autocomplete="off">'
 +'<label>Content</label><textarea id="fResContent" placeholder="What is this? (optional)">'+esc(r.content||'')+'</textarea>'
@@ -1149,6 +1254,7 @@ html+='<div class="print-topic"><h3>'+(i+1)+'. '+esc(r.name)+'</h3>'
 return html;
 }
 function saveChapterPDF(subjectId, chapterId){
+formDraftKey=null;
 openForm('Save as PDF', pdfOptionsHTML(false), 'Download PDF', ()=>{ genChapterPDF(subjectId, chapterId); });
 }
 async function genChapterPDF(subjectId, chapterId){
@@ -1193,6 +1299,7 @@ doc.save(pdfSafeName(sub.name)+' – '+pdfSafeName(ch.name)+'.pdf');
 showToast('PDF downloaded.');
 }
 function saveSubjectPDF(subjectId){
+formDraftKey=null;
 openForm('Save as PDF', pdfOptionsHTML(true), 'Download PDF', ()=>{ genSubjectPDF(subjectId); });
 }
 async function genSubjectPDF(subjectId){
@@ -1240,7 +1347,11 @@ doc.text(titleLines, P.W/2, P.getY(), {align:'center'}); P.addY(titleLines.lengt
 doc.setFont('helvetica','normal'); doc.setFontSize(13); doc.setTextColor(P.GREY[0],P.GREY[1],P.GREY[2]);
 if(sub.code){ doc.text(sub.code, P.W/2, P.getY(), {align:'center'}); P.addY(8); }
 doc.setFontSize(11);
-doc.text(fmtDur(sub.durationMin)+'  ·  '+sub.maxMarks+' marks  ·  '+sub.chapters.length+' chapters  ·  '+totalTopics+' topics  ·  '+totalResources+' resources', P.W/2, P.getY(), {align:'center'}); P.addY(8);
+let headParts=[];
+if(sub.durationMin!=null) headParts.push(fmtDur(sub.durationMin));
+if(sub.maxMarks!=null) headParts.push(sub.maxMarks+' marks');
+headParts.push(sub.chapters.length+' chapters', totalTopics+' topics', totalResources+' resources');
+doc.text(headParts.join('  ·  '), P.W/2, P.getY(), {align:'center'}); P.addY(8);
 if(sub.dist && anyDist(sub.dist)){ doc.setFontSize(11); doc.text(distLine(sub.dist), P.W/2, P.getY(), {align:'center'}); P.addY(8); }
 P.addY(6);
 P.rule();
