@@ -1207,7 +1207,114 @@ openForm(t.name,
 '<div class="chapter-meta" style="justify-content:center;margin-top:0"><span class="pill diff-'+t.difficulty+'">'+diffLabel(t.difficulty)+'</span><span class="pill imp-'+t.importance+'">'+impLabel(t.importance)+'</span></div>'
 +'<label>Note</label>'
 +(t.note ? '<div class="view-note">'+esc(t.note)+'</div>' : '<p class="empty" style="margin:6px 0 0">No note yet. Tap Edit topic to add one.</p>'),
-'Edit topic', ()=>{ openEditTopic(subjectId, chapterId, topicId); });
+'Edit topic', ()=>{ openEditTopic(subjectId, chapterId, topicId); },
+'<div style="margin-top:16px;text-align:center"><button class="smallbtn" onclick="downloadTopicImage(\''+sub.id+'\',\''+(chapterId||'')+'\',\''+t.id+'\')">Download image</button></div>');
+}
+
+/* Topic card image — download the topic as a 1:1 image in the Polymath card
+   style: fixed 470px header with a fresh random faded square grid, 104pt bold
+   topic name, hairline divider, the note as one uniform paragraph on pure
+   black, subject bottom-left, chapter top-right when the topic is in a
+   chapter. Drawn on canvas (no library, works offline). The image is 1080
+   wide; the height grows with the note, square when the note is short. */
+const CARD_W=1080, CARD_HDR=470, CARD_M=90, CARD_CELL=36, CARD_TITLE_PT=104;
+function cardPx(pt){ return Math.round(pt*96/72); }
+function cardSanitizeFilename(name){ return String(name||'Topic').replace(/[\\/:*?"<>|]/g,'').trim()||'Topic'; }
+function cardWrapLines(ctx, text, maxW){
+  let words=String(text).split(/\s+/).filter(Boolean); let lines=[]; let cur='';
+  for(let w of words){
+    let test=cur?cur+' '+w:w;
+    if(ctx.measureText(test).width<=maxW){ cur=test; continue; }
+    if(cur){ lines.push(cur); cur=''; }
+    while(ctx.measureText(w).width>maxW && w.length>1){
+      let cut=1;
+      while(cut<w.length && ctx.measureText(w.slice(0,cut+1)).width<=maxW) cut++;
+      lines.push(w.slice(0,cut)); w=w.slice(cut);
+    }
+    cur=w;
+  }
+  if(cur) lines.push(cur);
+  return lines;
+}
+function cardTitleLines(ctx, text, maxW){
+  let lines=cardWrapLines(ctx, text, maxW);
+  if(lines.length<=2) return lines;
+  let first=lines[0];
+  let rest=lines.slice(1).join(' ').split(/\s+/).filter(Boolean);
+  let second='';
+  for(let w of rest){
+    let test=second?second+' '+w:w;
+    if(ctx.measureText(test+' \u2026').width<=maxW){ second=test; } else break;
+  }
+  return [first, (second?second+' \u2026':'\u2026')];
+}
+function cardDrawGrid(ctx, w, h){
+  let pitch=CARD_CELL, sq=pitch-3;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0,0,w,h); ctx.clip();
+  ctx.globalAlpha=0.5;
+  for(let y=0; y<h; y+=pitch){
+    for(let x=0; x<w; x+=pitch){
+      if(Math.random()<0.45) continue;
+      let g=40+Math.floor(Math.random()*120);
+      ctx.fillStyle='rgb('+g+','+g+','+g+')';
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(x+1, y+1, sq, sq, 5); else ctx.rect(x+1, y+1, sq, sq);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+function downloadTopicImage(subjectId, chapterId, topicId){
+  let sub=findSubject(subjectId); if(!sub) return;
+  let ch=chapterId?findChapter(sub, chapterId):null;
+  let t=findTopic(sub, chapterId, topicId); if(!t) return;
+  let note=(t.note||'').trim();
+  if(!note){ showToast('Add a note to this topic first.'); return; }
+  let cv=document.createElement('canvas');
+  let ctx=cv.getContext('2d');
+  let W=CARD_W, M=CARD_M;
+  ctx.font='700 '+cardPx(CARD_TITLE_PT)+'px Inter, -apple-system, "Segoe UI", sans-serif';
+  let titleLines=cardTitleLines(ctx, t.name, W-2*M);
+  let titleLH=135, titleBase=228;
+  ctx.font='400 40px Inter, -apple-system, "Segoe UI", sans-serif';
+  let bodyLines=cardWrapLines(ctx, note, W-2*M);
+  let bodyLH=62, bodyBase=592;
+  let lastBodyBase=bodyBase+(bodyLines.length-1)*bodyLH;
+  let subjectBase=lastBodyBase+95;
+  let H=Math.max(1080, subjectBase+60);
+  cv.width=W; cv.height=H;
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+  cardDrawGrid(ctx, W, CARD_HDR);
+  ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  if(ch){
+    ctx.font='400 32px Inter, -apple-system, "Segoe UI", sans-serif';
+    ctx.fillStyle='rgba(255,255,255,0.85)';
+    ctx.textAlign='right';
+    ctx.fillText(ch.name, W-M, 78);
+    ctx.textAlign='left';
+  }
+  ctx.font='700 '+cardPx(CARD_TITLE_PT)+'px Inter, -apple-system, "Segoe UI", sans-serif';
+  ctx.fillStyle='#fff';
+  titleLines.forEach(function(line, i){ ctx.fillText(line, M, titleBase+i*titleLH); });
+  ctx.fillStyle='rgba(255,255,255,0.32)';
+  ctx.fillRect(M, CARD_HDR-1, W-2*M, 2);
+  ctx.font='400 40px Inter, -apple-system, "Segoe UI", sans-serif';
+  ctx.fillStyle='#fff';
+  bodyLines.forEach(function(line, i){ ctx.fillText(line, M, bodyBase+i*bodyLH); });
+  ctx.font='300 28px Inter, -apple-system, "Segoe UI", sans-serif';
+  try{ ctx.letterSpacing='6px'; }catch(e){}
+  ctx.fillStyle='rgba(255,255,255,0.72)';
+  ctx.fillText(String(sub.name||'').toUpperCase(), M, subjectBase);
+  try{ ctx.letterSpacing='0px'; }catch(e){}
+  cv.toBlob(function(blob){
+    if(!blob){ showToast('Could not make the image.'); return; }
+    let a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=cardSanitizeFilename(t.name)+'.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+    showToast('Image downloaded.');
+  }, 'image/png');
 }
 function openEditTopic(subjectId, chapterId, topicId){
 let sub=findSubject(subjectId); if(!sub) return;
