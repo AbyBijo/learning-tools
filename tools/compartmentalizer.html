@@ -151,7 +151,7 @@ body.home-view .fab{bottom:122px}
 /* Custom toast — no native alert anywhere */
 #toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:28px;background:#1d1d1f;color:#fff;padding:13px 20px;border-radius:999px;font-weight:600;font-size:14px;z-index:80;box-shadow:0 12px 32px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease;max-width:92vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#toast.has-undo{pointer-events:auto}
+#toast .undo-btn{pointer-events:auto}
 #toast .undo-btn{border:0;background:transparent;color:#64d2ff;font-weight:800;font-size:14px;cursor:pointer;font-family:Inter,sans-serif;margin-left:12px;padding:6px 4px}
 #toast .undo-btn:active{transform:scale(.96)}
 /* Search + backup card — home page */
@@ -523,15 +523,15 @@ closeForm(); goMain(); showToast(mergeSummary(added));
    what you have now is downloaded first, so nothing is lost by accident. */
 function askReplaceBackup(){
 if(!pendingImport) return;
-askDelete('Replace everything?', 'All your subjects will be replaced by the backup file. A safety backup of what you have now will be downloaded first.', async ()=>{
 downloadBackupFile(state.subjects, 'compartmentalizer-backup-before-replace-'+dateStamp()+'.json');
+askDelete('Replace everything?', 'All your subjects will be replaced by the backup file. A safety backup of what you have now was downloaded first.', async ()=>{
 let list=pendingImport; pendingImport=null;
 state.subjects=list;
 for(let s of state.subjects) await saveSubject(s);
 if(idbReady){ let old=await idbAll(); for(let o of old){ if(!state.subjects.find(x=>x.id===o.id)) await idbDel(o.id); } }
 else { try{ localStorage.setItem(LS_FALLBACK, JSON.stringify(state.subjects)); }catch(err){} }
 goMain(); showToast('Backup imported.');
-});
+}, 'Replace');
 }
 let toastTimer=null;
 function showToast(msg, undoFn){
@@ -671,7 +671,7 @@ else if(e.key==='Escape'){ e.preventDefault(); closeAllDropdowns(); let b=dd.que
 
 /* Delete pop-up (custom) */
 let confirmAction=null;
-function askDelete(title, text, action){ $('modalTitle').textContent=title; $('modalText').textContent=text; confirmAction=action; $('modal').classList.add('open'); }
+function askDelete(title, text, action, confirmLabel){ $('modalTitle').textContent=title; $('modalText').textContent=text; $('modalConfirm').textContent=confirmLabel||'Delete'; confirmAction=action; $('modal').classList.add('open'); focusFirstIn($('modal')); }
 function closeModal(){ $('modal').classList.remove('open'); confirmAction=null; }
 $('modalConfirm').onclick=async ()=>{ let a=confirmAction; closeModal(); if(a) await a(); };
 
@@ -725,10 +725,28 @@ updateDistSummary();
 
 /* Form pop-up (custom) — Add Subject / Edit Subject / Add Chapter / Add Topic */
 let formSubmit=null;
+/* Focus stays inside an open dialog: Tab cycles within it instead of
+   wandering to the page behind, and opening a dialog puts focus on its
+   first control. */
+function focusFirstIn(box){
+let el=box.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+if(el) el.focus();
+}
+document.addEventListener('keydown', e=>{
+if(e.key!=='Tab') return;
+let open=document.querySelector('.modal.open');
+if(!open) return;
+let els=[...open.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter(el=>!el.disabled && el.offsetParent!==null);
+if(!els.length) return;
+if(!open.contains(document.activeElement)){ e.preventDefault(); els[0].focus(); return; }
+let first=els[0], last=els[els.length-1];
+if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); }
+else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); }
+});
 function openForm(title, bodyHTML, primaryLabel, onSubmit, extraHTML){
 $('formTitle').textContent=title; $('formBody').innerHTML=bodyHTML;
 $('formPrimary').textContent=primaryLabel; $('formExtra').innerHTML=extraHTML||'';
-formSubmit=onSubmit; $('formModal').classList.add('open');
+formSubmit=onSubmit; $('formModal').classList.add('open'); focusFirstIn($('formModal'));
 restoreDraft();
 }
 function closeForm(){ clearCurrentDraft(); $('formModal').classList.remove('open'); formSubmit=null; formTopicId=null; formDraftKey=null; savePlace(); }
